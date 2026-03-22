@@ -374,7 +374,6 @@ pointer-events: none;
 <div id="app" role="main"></div>
 <div id="modal-root"></div>
 <script>
-'use strict';
 // ============================================================
 // 定数
 // ============================================================
@@ -388,7 +387,7 @@ const PITCH_BTNS=[
 {code:“S”,  label:“S”,  sub:“見逃し”,  cls:“btn-smiss”},
 {code:“SW”, label:“SW”, sub:“空振り”,  cls:“btn-swing”},
 {code:“F”,  label:“F”,  sub:“ファウル”,cls:“btn-foul”},
-{code:“HBP”,label:“HBP”,sub:“死球”,   cls:“btn-hbp”},
+{code:“HBP”,label:“HBP”,sub:“死球”,   cls:“btn-hbp”}
 ];
 
 // ヘルプポップアップ定義
@@ -403,7 +402,7 @@ items:[
 {sym:“S”,   color:”#0f1f3d”, desc:“見逃しS — バットを振らずにストライク”},
 {sym:“SW”,  color:”#c00”,    desc:“空振りS — バットを振って空振り”},
 {sym:“F”,   color:”#a05000”, desc:“ファウル — 2ストライクまでカウント”},
-{sym:“HBP”, color:”#856404”, desc:“死球 — ボールが打者に当たった”},
+{sym:“HBP”, color:”#856404”, desc:“死球 — ボールが打者に当たった”}
 ]
 },
 result_out:{
@@ -420,7 +419,7 @@ items:[
 {sym:“SAC”,  color:”#78909c”, desc:“犠打 — 送りバントで打者アウト、走者進塁”},
 {sym:“SQ”,   color:”#2e7d32”, desc:“スクイズ — バントで3塁走者を生還させる”},
 {sym:“SF”,   color:”#546e7a”, desc:“犠牲フライ — 外野フライで3塁走者ホームイン”},
-{sym:“DP”,   color:”#37474f”, desc:“ゲッツー — 例: 6∪4∪3 = 遊→二→一のゲッツー”},
+{sym:“DP”,   color:”#37474f”, desc:“ゲッツー — 例: 6∪4∪3 = 遊→二→一のゲッツー”}
 ]
 },
 result_hit:{
@@ -432,7 +431,7 @@ items:[
 {sym:“2H”,   color:”#1b7a3e”, desc:“二塁打 — 2塁まで進んだ安打”},
 {sym:“3H”,   color:”#1b7a3e”, desc:“三塁打 — 3塁まで進んだ安打”},
 {sym:“HR”,   color:”#e53935”, desc:“本塁打 — 柵越えホームラン（右上に記入）”},
-{sym:“RH”,   color:”#b71c1c”, desc:“ランニングHR — 走り抜けて一周（右上に記入）”},
+{sym:“RH”,   color:”#b71c1c”, desc:“ランニングHR — 走り抜けて一周（右上に記入）”}
 ]
 },
 result_reach:{
@@ -447,7 +446,7 @@ items:[
 {sym:“FC4”,  color:”#0277bd”, desc:“野選 — 例: FC4 = 二塁手が他の走者を狙い打者出塁”},
 {sym:“妨”,   color:”#ad1457”, desc:“走塁妨害 — 野手が走者の走塁を妨げた”},
 {sym:“CI”,   color:”#ad1457”, desc:“打撃妨害 — 捕手が打者のスイングを妨げた”},
-{sym:“OBI”,  color:”#ad1457”, desc:“守備妨害 — 打者が守備の邪魔をした”},
+{sym:“OBI”,  color:”#ad1457”, desc:“守備妨害 — 打者が守備の邪魔をした”}
 ]
 },
 runner:{
@@ -461,7 +460,7 @@ items:[
 {sym:“RUNDOWN”,color:”#c62828”, desc:“挟殺（ランダウン）— 塁間で挟まれてアウト”},
 {sym:“WP”,     color:”#283593”, desc:“暴投 — 投球が逸れ走者が進む”},
 {sym:“PB”,     color:”#283593”, desc:“捕逸 — 捕手がボールを逸らし走者が進む”},
-{sym:“BALK”,   color:”#283593”, desc:“ボーク — 全走者が1つ進む”},
+{sym:“BALK”,   color:”#283593”, desc:“ボーク — 全走者が1つ進む”}
 ]
 },
 scoring:{
@@ -472,9 +471,9 @@ items:[
 {sym:“○”,    color:”#e53935”, desc:“赤丸で囲む — 得点した時にダイヤモンドを囲む”},
 {sym:“右下”,  color:”#333”,   desc:“打席結果記号（K, H, SAC 等）を書く場所”},
 {sym:“右上”,  color:”#c62828”, desc:“HR・RHのみ記入する場所”},
-{sym:“左上”,  color:”#555”,   desc:“投球記号（B, S, F等）を小さく記入する場所”},
+{sym:“左上”,  color:”#555”,   desc:“投球記号（B, S, F等）を小さく記入する場所”}
 ]
-},
+}
 };
 
 const RUNNER_EVENTS=[
@@ -489,7 +488,7 @@ const RUNNER_EVENTS=[
 {code:“WP”,     label:“暴投”,     sub:“投球が逸れた”,  bg:”#283593”},
 {code:“PB”,     label:“捕逸”,     sub:“捕手が逸らした”,bg:”#283593”},
 {code:“BALK”,   label:“ボーク”,   sub:“全走者1つ進む”, bg:”#283593”},
-{code:“SCORE”,  label:“得点追加”, sub:“手動で追加”,    bg:”#c62828”},
+{code:“SCORE”,  label:“得点追加”, sub:“手動で追加”,    bg:”#c62828”}
 ];
 
 const RESULT_GROUPS={
@@ -507,7 +506,7 @@ out:[
 {code:“SQE”, label:“スクイズ失敗”,sub:“同時に2アウト”,color:“var(–c-out)”},
 {code:“SF”,  label:“犠牲フライ”, sub:“3塁走者生還”,  color:“var(–c-out)”,wiz:true},
 {code:“DP”,  label:“ゲッツー”,   sub:“2人同時アウト”, color:“var(–c-out)”,wiz:true},
-{code:“K3B”, label:“3バント三振”,sub:“バント失敗”,    color:“var(–c-out)”},
+{code:“K3B”, label:“3バント三振”,sub:“バント失敗”,    color:“var(–c-out)”}
 ],
 
 // ─── ヒット ───
@@ -517,7 +516,7 @@ hit:[
 {code:“3H”,  label:“三塁打”,      sub:“3塁へ”,    color:“var(–c-hit)”,wiz:true},
 {code:“HR”,  label:“ホームラン”,  sub:“1周して得点”,color:“var(–c-hit)”},
 {code:“RH”,  label:“ランニングHR”,sub:“走り抜け”,  color:“var(–c-hit)”},
-{code:“BH”,  label:“バントヒット”,sub:“バント安打”, color:“var(–c-hit)”,wiz:true},
+{code:“BH”,  label:“バントヒット”,sub:“バント安打”, color:“var(–c-hit)”,wiz:true}
 ],
 
 // ─── 出塁（ヒット以外）───
@@ -526,8 +525,8 @@ reach:[
 {code:“FC”,  label:“野選で出塁”,  sub:“守備の選択”, color:“var(–c-reach)”,wiz:true},
 {code:“SACE”,label:“バントエラー”,sub:“バントミス”,  color:“var(–c-reach)”,wiz:true},
 {code:“CI”,  label:“打撃妨害”,    sub:“捕手のミス”, color:“var(–c-reach)”},
-{code:“OBI”, label:“走塁妨害”,    sub:“野手のミス”, color:“var(–c-reach)”},
-],
+{code:“OBI”, label:“走塁妨害”,    sub:“野手のミス”, color:“var(–c-reach)”}
+]
 };
 
 // ============================================================
@@ -801,7 +800,7 @@ var msgs={
 “DP”:  “現在2アウトのためゲッツーは成立しません。それでも記録しますか？”,
 “SAC”: “走者がいませんが、犠打として記録しますか？”,
 “SF”:  “3塁に走者がいませんが、犠牲フライとして記録しますか？”,
-“KWP”: “現在の状況では振り逃げが成立しない可能性があります。それでも記録しますか？”,
+“KWP”: “現在の状況では振り逃げが成立しない可能性があります。それでも記録しますか？”
 };
 return msgs[code]||“この状況では通常起こらないプレーですが、記録しますか？”;
 }
@@ -833,7 +832,7 @@ pendingOrders:[],
 // nullなら通常の現在打者
 editingSlot:null,
 // ── 投手管理 ──
-pitchers:{ top:[], bottom:[] },
+pitchers:{ top:[], bottom:[] }
 };
 }
 
@@ -891,7 +890,7 @@ unearnedRuns:0,
 battersFaced:0,
 inningStart:S.curInning,
 inningStartOuts:S.outs,
-isCurrent:true,
+isCurrent:true
 });
 }
 
@@ -922,7 +921,7 @@ return{order:i+1,number:nums[i],name:selected[i],position:DEFAULT_POS[i]};
 function makeGame(){
 return{
 top:   Array.from({length:MAX_INNINGS},()=>({atBats:[],score:0,earnedRuns:0,events:[],changes:[]})),
-bottom:Array.from({length:MAX_INNINGS},()=>({atBats:[],score:0,earnedRuns:0,events:[],changes:[]})),
+bottom:Array.from({length:MAX_INNINGS},()=>({atBats:[],score:0,earnedRuns:0,events:[],changes:[]}))
 };
 }
 
@@ -1615,7 +1614,7 @@ runnerInfo:JSON.parse(JSON.stringify(S.runnerInfo||{})),
 _pendingChange:S._pendingChange,
 pendingOrders:JSON.parse(JSON.stringify(S.pendingOrders||[])),
 editingSlot:S.editingSlot?JSON.parse(JSON.stringify(S.editingSlot)):null,
-pitchers:JSON.parse(JSON.stringify(S.pitchers||{top:[],bottom:[]})),
+pitchers:JSON.parse(JSON.stringify(S.pitchers||{top:[],bottom:[]}))
 };
 S.history=[snap].concat(S.history).slice(0,10);
 }
@@ -1799,7 +1798,7 @@ rc:rc, sym:sym, sel:sel,
 runners:[0],  // 0 = 打者
 moves:defaultMoves0,
 currentIdx:0,
-extraOuts:0,
+extraOuts:0
 };
 render();
 return;
@@ -1827,7 +1826,7 @@ rc: rc, sym: sym, sel: sel,
 runners: runnersToCheck,
 moves: defaultMoves,
 currentIdx: 0,
-extraOuts: 0,
+extraOuts: 0
 };
 render();
 }
@@ -2141,7 +2140,7 @@ quickBase:reachBase||null,  // 出塁した塁
 basesSnapshot:S.curBases.slice(),
 outsSnapshot:S.outs,
 runnerInfoSnapshot:JSON.parse(JSON.stringify(S.runnerInfo)),
-pitchersSnapshot:JSON.parse(JSON.stringify(S.pitchers)),
+pitchersSnapshot:JSON.parse(JSON.stringify(S.pitchers))
 });
 if(!S.pendingOrders)S.pendingOrders=[];
 S.pendingOrders.push({side:S.curSide,inning:S.curInning,order:order,slotIdx:newSlotIdx});
@@ -2193,7 +2192,7 @@ side:S.curSide,
 basesSnapshot:S.curBases.slice(),
 outsSnapshot:S.outs,
 runnerInfoSnapshot:JSON.parse(JSON.stringify(S.runnerInfo)),
-pitchersSnapshot:JSON.parse(JSON.stringify(S.pitchers)),
+pitchersSnapshot:JSON.parse(JSON.stringify(S.pitchers))
 });
 // pendingOrdersにも追加
 if(!S.pendingOrders)S.pendingOrders=[];
@@ -2317,7 +2316,7 @@ hasErrorInPlay:!!(sel&&(sel.errorWho||sel.hasError||([“E”,“FC”,“CI”,
 // タイムリー情報（得点に絡んだ打席かどうか）
 isTimely:scored>0&&[“1H”,“2H”,“3H”,“HR”,“RH”,“BH”,“SF”,“SQ”].includes(rc),
 isForcedIn:scored>0&&[“BB”,“HBP”,“CI”,“OBI”,“KWP”].includes(rc),
-timelyCount:scored,
+timelyCount:scored
 };
 // editingSlot（遡り入力 or 既存打席修正）の場合
 if(S.editingSlot){
@@ -2485,7 +2484,7 @@ if(allAbs[i2].order===runnerOrder){targetAb=allAbs[i2];break;}
 if(!targetAb)targetAb=allAbs[allAbs.length-1];
 if(!targetAb.runnerOutEvents)targetAb.runnerOutEvents=[];
 targetAb.runnerOutEvents.push({
-code:code, label:lbl, outBase:base, defNum:defNum||null,
+code:code, label:lbl, outBase:base, defNum:defNum||null
 });
 })();
 
@@ -2525,56 +2524,56 @@ var TUTORIAL_EXAMPLES=[
 id:“k”,situation:“見逃し三振”,player:“3回裏 許 #38”,pitches:[“B”,“B”,“S”,“SW”,“S”],result:“K”,
 runPath:[],reachedBases:[],scoredNum:0,outCountAfter:3,defense:{},
 sym:{sym:“K”,desc:“三振（見逃し）”,color:”#c00”},
-explanation:[“右下に <strong>K</strong> → 見逃し三振”,“アウトカウントを右下に <strong>III</strong> と書く”,“バットを振らずにストライク3つ目”],
+explanation:[“右下に <strong>K</strong> → 見逃し三振”,“アウトカウントを右下に <strong>III</strong> と書く”,“バットを振らずにストライク3つ目”]
 },
 {
 id:“sk”,situation:“空振り三振”,player:“2回表 斉藤 #23”,pitches:[“B”,“S”,“SW”],result:“SK”,
 runPath:[],reachedBases:[],scoredNum:0,outCountAfter:2,defense:{},
 sym:{sym:“SK”,desc:“三振（空振り）”,color:”#8b0000”},
-explanation:[“右下に <strong>SK</strong> → 空振り三振”,“バットを振ってストライク3つ目”,“アウトカウント <strong>II</strong>”],
+explanation:[“右下に <strong>SK</strong> → 空振り三振”,“バットを振ってストライク3つ目”,“アウトカウント <strong>II</strong>”]
 },
 {
 id:“bb”,situation:“フォアボール”,player:“3回表 松井 #10”,pitches:[“B”,“B”,“B”,“B”],result:“BB”,
 runPath:[1],reachedBases:[1],scoredNum:0,outCountAfter:0,defense:{hitType:“BB”},
 sym:{sym:“B”,desc:“四球”,color:”#0066cc”},
-explanation:[“右下に <strong>B</strong> → フォアボール”,“ホームから一塁へ<strong style='color:#e53935'>赤線</strong>”,“ボール4つで自動記録”],
+explanation:[“右下に <strong>B</strong> → フォアボール”,“ホームから一塁へ<strong style='color:#e53935'>赤線</strong>”,“ボール4つで自動記録”]
 },
 {
 id:“ground_err”,situation:“セカンドゴロ エラー”,player:“2回表 坂崎”,pitches:[“B”,“S”],result:“E”,
 runPath:[1],reachedBases:[1],scoredNum:0,outCountAfter:1,defense:{hitType:“GO”,fielder1:4,errorWho:4,outcome:“reach”},
 sym:{sym:“4E”,desc:“セカンドエラー”,color:”#e67e22”},
-explanation:[“右下に <strong>4E</strong> → 二塁手(4番)エラー”,“エラーで出塁→赤線を一塁まで引く”,“守備詳細でゴロ→エラーありを選択”],
+explanation:[“右下に <strong>4E</strong> → 二塁手(4番)エラー”,“エラーで出塁→赤線を一塁まで引く”,“守備詳細でゴロ→エラーありを選択”]
 },
 {
 id:“go53”,situation:“サードゴロ ファーストアウト”,player:“2回裏 高田”,pitches:[“B”,“S”,“B”,“S”],result:“GO”,
 runPath:[],reachedBases:[],scoredNum:0,outCountAfter:3,defense:{hitType:“GO”,fielder1:5,throwTo:3,outcome:“out”},
 sym:{sym:“5∪3”,desc:“三→一ゴロアウト”,color:”#546e7a”},
-explanation:[“右下に <strong>5∪3</strong> → 三(5)が捕って一(3)でアウト”,“番号間の<strong>∪</strong>が送球を表す”,“走塁線なし、アウトカウント右下”],
+explanation:[“右下に <strong>5∪3</strong> → 三(5)が捕って一(3)でアウト”,“番号間の<strong>∪</strong>が送球を表す”,“走塁線なし、アウトカウント右下”]
 },
 {
 id:“fly9”,situation:“ライトフライ”,player:“3回 坂崎”,pitches:[“S”,“B”,“F”],result:“FO”,
 runPath:[],reachedBases:[],scoredNum:0,outCountAfter:2,defense:{hitType:“FO”,fielder1:9},
 sym:{sym:“9∩”,desc:“ライトフライ”,color:”#607d8b”},
-explanation:[“右下に <strong>9∩</strong> → ライト(9番)がフライキャッチ”,“番号の上の<strong>∩</strong>がフライを表す”,“アウトカウント <strong>II</strong>”],
+explanation:[“右下に <strong>9∩</strong> → ライト(9番)がフライキャッチ”,“番号の上の<strong>∩</strong>がフライを表す”,“アウトカウント <strong>II</strong>”]
 },
 {
 id:“single”,situation:“センター前ヒット”,player:“3回表 松平”,pitches:[“B”,“S”,“F”],result:“1H”,
 runPath:[1],reachedBases:[1],scoredNum:0,outCountAfter:0,defense:{hitType:“1H”,fielder1:8},
 sym:{sym:“8H”,desc:“センター前単打”,color:”#1b7a3e”},
-explanation:[“右下に <strong>8H</strong> → 中(8番)前へのヒット”,“ホームから一塁へ<strong style='color:#e53935'>赤線</strong>”,“ヒットタブの「H 単打」→守備詳細で8番を選択”],
+explanation:[“右下に <strong>8H</strong> → 中(8番)前へのヒット”,“ホームから一塁へ<strong style='color:#e53935'>赤線</strong>”,“ヒットタブの「H 単打」→守備詳細で8番を選択”]
 },
 {
 id:“hr”,situation:“ホームラン”,player:“3回表 松井”,pitches:[“B”,“B”,“SW”,“F”,“S”],result:“HR”,
 runPath:[1,2,3,“H”],reachedBases:[1,2,3],scoredNum:1,outCountAfter:0,defense:{hitType:“HR”},
 sym:{sym:“HR”,desc:“本塁打”,color:”#e53935”},
-explanation:[“右上に <strong>HR</strong>、一周して赤線”,“中央に得点番号<strong style='color:#e53935'>①</strong>（丸囲み）”,“ダイヤモンドを<strong style='color:#e53935'>赤丸</strong>で囲む”],
+explanation:[“右上に <strong>HR</strong>、一周して赤線”,“中央に得点番号<strong style='color:#e53935'>①</strong>（丸囲み）”,“ダイヤモンドを<strong style='color:#e53935'>赤丸</strong>で囲む”]
 },
 {
 id:“rh”,situation:“ランニングホームラン”,player:“3回裏 松井”,pitches:[“S”,“B”],result:“RH”,
 runPath:[1,2,3,“H”],reachedBases:[1,2,3],scoredNum:1,outCountAfter:0,defense:{hitType:“RH”},
 sym:{sym:“RH”,desc:“ランニングHR”,color:”#b71c1c”},
-explanation:[“右上に <strong>RH</strong>（HRとの違いはRH）”,“ホームから一周して赤線”,“中央に得点番号丸囲み＋赤丸”],
-},
+explanation:[“右上に <strong>RH</strong>（HRとの違いはRH）”,“ホームから一周して赤線”,“中央に得点番号丸囲み＋赤丸”]
+}
 ];
 
 function pickTutorialExamples(){
@@ -2707,7 +2706,7 @@ unearnedRuns:0,
 battersFaced:0,
 inningStart:0,
 inningStartOuts:0,
-isCurrent:true,
+isCurrent:true
 }];
 });
 }
@@ -3359,7 +3358,7 @@ var helpKeys=[
 {key:“result_hit”,label:“ヒット”},
 {key:“result_reach”,label:“出塁”},
 {key:“runner”,label:“走者”},
-{key:“scoring”,label:“書き方”},
+{key:“scoring”,label:“書き方”}
 ];
 var curKey=m.helpKey||“pitch”;
 var tabBtns=helpKeys.map(function(hk){
@@ -3531,7 +3530,7 @@ detail:(function(){
 if(_outs>=2)return”2アウトなので捕手が逸らしたら振り逃げが成立します。捕手が後ろに逸らした場合は「振り逃げ」を選んでください。”;
 if(!_has1)return”1塁が空いているので振り逃げが成立します。捕手が後ろに逸らした場合は「振り逃げ」を選んでください。”;
 return”1塁に走者がいて2アウト未満のため、振り逃げは成立しません。アウトとして記録してください。”;
-})()},
+})()}
 };
 var j=judgeMap[auto]||{label:auto,sym:auto,color:”#888”,icon:“⚾”,msg:””};
 var cnt2=getRawCount(S.curPitches);
@@ -3602,7 +3601,7 @@ var map={
 “OBI”:“走塁妨害で出塁 — 野手が走者の邪魔をしたため塁が与えられました”,
 “CI”:“打撃妨害で出塁 — 捕手が打者のバットに触れたため1塁が与えられました”,
 “GO_E”:“ゴロエラーで出塁 — ゴロを守備ミスで捕れずに打者が出塁しました”,
-“SACE”:“送りバントエラーで出塁 — バントを守備がミスして打者が出塁しました”,
+“SACE”:“送りバントエラーで出塁 — バントを守備がミスして打者が出塁しました”
 };
 var base=map[rc]||rc;
 // 得点情報を付加（主語を明示）
@@ -3800,12 +3799,12 @@ SF:“外野フライを捕った選手”,
 E:“ミスをした守備選手”,
 FC:“最初にボールを触った選手”,
 GO_E:“ゴロを処理しようとした選手”,
-SACE:“バントを処理しようとした選手”,
+SACE:“バントを処理しようとした選手”
 };
 var htDesc={
 GO:“ゴロ”,FO:“フライ”,LO:“ライナー”,IFF:“内野フライ”,
 DP:“ゲッツー”,SAC:“送りバント”,SQ:“スクイズ”,SQE:“スクイズ失敗”,
-SF:“犠牲フライ”,E:“エラー”,FC:“野選”,GO_E:“ゴロエラー”,SACE:“バントエラー”,
+SF:“犠牲フライ”,E:“エラー”,FC:“野選”,GO_E:“ゴロエラー”,SACE:“バントエラー”
 };
 body=’<div class="step-label">守備の選手を入力（任意）</div>’+
 ‘<div class="step-q">’+(hints[ht]||“最初にボールに触れた選手”)+‘は？</div>’+
@@ -4198,7 +4197,7 @@ var SCOREBOOK_TIPS=[
 {q:“入力を間違えた”,a:“画面下の「取り消す」ボタンで直前の打席に戻れます”},
 {q:“自責点って何？”,a:“守備ミス（エラー）がなければ入らなかった可能性がある点は「非自責点」として投手の成績に含まれません。アプリが自動で判断します”},
 {q:“タイムリーって何？”,a:“走者がいるときにヒットを打って走者がホームインした打撃のことです。打点が記録されます”},
-{q:“守備番号がわからない”,a:“1=投手 2=捕手 3=一塁手 4=二塁手 5=三塁手 6=遊撃手（ショート） 7=左翼手 8=中堅手 9=右翼手”},
+{q:“守備番号がわからない”,a:“1=投手 2=捕手 3=一塁手 4=二塁手 5=三塁手 6=遊撃手（ショート） 7=左翼手 8=中堅手 9=右翼手”}
 ];
 function renderScorebook(){
 // サブタブ（スコア一覧 / Tips）
@@ -4367,13 +4366,13 @@ return’<div style="padding:10px 10px 8px"><div class="card" style="padding:8px
 function renderPitchers(){
 var sides=[
 {side:“bottom”, label:“先攻投手陣（ビジター守備）”, team:S.awayTeam},
-{side:“top”,    label:“後攻投手陣（ホーム守備）”,   team:S.homeTeam},
+{side:“top”,    label:“後攻投手陣（ホーム守備）”,   team:S.homeTeam}
 ];
 // 現在の攻撃側に合わせて守備側を先に表示
 if(S.curSide===“bottom”){
 sides=[
 {side:“top”,    label:“先攻投手陣（ビジター守備）”, team:S.awayTeam},
-{side:“bottom”, label:“後攻投手陣（ホーム守備）”,   team:S.homeTeam},
+{side:“bottom”, label:“後攻投手陣（ホーム守備）”,   team:S.homeTeam}
 ];
 }
 
@@ -5020,7 +5019,7 @@ atBase:atBase,
 defNum:defNum||null,
 reason:“out”,
 auto:false,
-confirmed:true,
+confirmed:true
 };
 if(!rm.extraOuts)rm.extraOuts=0;
 rm.extraOuts++;
