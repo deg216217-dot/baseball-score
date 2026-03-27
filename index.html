@@ -2991,12 +2991,8 @@ function startGame(){
   S.curSide="top";S.curInning=0;
   S.curBases=[];S.outs=0;S.curPitches=[];S.modal=null;S.autoMsg=null;S.history=[];
   S.runnerInfo={};S._pendingChange=false;S._pitcherChangedMidAB=false;
-  // チェンジ後: 今のイニング/サイドのpendingOrdersは引き継がない
-  if(S.pendingOrders){
-    S.pendingOrders=S.pendingOrders.filter(function(po){
-      return!(po.side===oldSide&&po.inning===oldInning);
-    });
-  }
+  // 試合開始時: pendingOrdersを全てクリア
+  S.pendingOrders=[];
   S.editingSlot=null;
   S.pitchers={top:[],bottom:[]};
   // 両チームの先発投手（守備側）を初期化
@@ -3168,15 +3164,14 @@ function renderInputTab(){
   var hasRunners=S.curBases.length>0;
 
   // 状況ガイド（フッター上に出る小さいオーバーレイ）
-  var cnt=getCount(S.curPitches);
-  var b=cnt.b, sv=cnt.s;
+  // cnt, b, sv は上で既に宣言済み
   // ガイドはrenderGame()側で生成・表示
 
   // ── ① 投球ボタン ──
-  var pitchBtns=PITCH_BTNS.map(function(b){
-    return'<button class="btn '+b.cls+dis+'" data-pitch="'+b.code+'" aria-label="投球: '+b.label+(b.sub?' ('+b.sub+')':'')+'">'+
-      '<span style="line-height:1" aria-hidden="true">'+b.label+'</span>'+
-      (b.sub?'<span class="btn-sub" aria-hidden="true">'+b.sub+'</span>':'')+
+  var pitchBtns=PITCH_BTNS.map(function(pb){
+    return'<button class="btn '+pb.cls+dis+'" data-pitch="'+pb.code+'" aria-label="投球: '+pb.label+(pb.sub?' ('+pb.sub+')':'')+'">'+
+      '<span style="line-height:1" aria-hidden="true">'+pb.label+'</span>'+
+      (pb.sub?'<span class="btn-sub" aria-hidden="true">'+pb.sub+'</span>':'')+
     '</button>';
   }).join("")+
   '<button class="btn btn-del" id="delPitch" aria-label="直前の投球を取り消す">'+
@@ -3416,10 +3411,11 @@ function renderModal(){
     var runners=rm.runners||[];
     var idx=rm.currentIdx||0;
 
-    // 全走者確認完了 → commit
+    // 全走者確認完了 → commit（再帰render防止のためdefer）
     if(idx>=runners.length){
       S.modal=null;
-      commitAtBatWithRunnerMoves(rm.rc, rm.sym, rm.sel, rm.moves);
+      var _rm1=rm;
+      setTimeout(function(){ commitAtBatWithRunnerMoves(_rm1.rc, _rm1.sym, _rm1.sel, _rm1.moves, _rm1.extraOuts||0); }, 0);
       return"";
     }
 
@@ -3434,7 +3430,8 @@ function renderModal(){
       }
       if(nextIdx2===null){
         S.modal=null;
-        commitAtBatWithRunnerMoves(rm.rc, rm.sym, rm.sel, rm.moves);
+        var _rm2=rm;
+        setTimeout(function(){ commitAtBatWithRunnerMoves(_rm2.rc, _rm2.sym, _rm2.sel, _rm2.moves, _rm2.extraOuts||0); }, 0);
         return"";
       }
       rm.currentIdx=nextIdx2;
