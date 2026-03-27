@@ -1338,7 +1338,7 @@ function getCount(pitches){
     else if(p==="S"||p==="SW"){if(s<2)s++;}
     else if(p==="F"){if(s<2)s++;}
   }
-  return{b,s,hbp};
+  return{b:b,s:s,hbp:hbp};
 }
 function getRawCount(pitches){
   // 判定用（上限なし）
@@ -1350,7 +1350,7 @@ function getRawCount(pitches){
     else if(p==="S"||p==="SW")s++;
     else if(p==="F"){if(s<2)s++;}
   }
-  return{b,s,hbp};
+  return{b:b,s:s,hbp:hbp};
 }
 function checkAuto(pitches){
   if(!pitches||pitches.length===0)return null;
@@ -1548,8 +1548,8 @@ function wasedaDiamondSvg(ab,size){
   var brSym="",brColor="#333";
   var OUT_CODES=["K","SK","K3B","GO","FO","LO","IFF","SAC","SQ","SQE","SF","DP"];
   var isOut=OUT_CODES.includes(rc);
-  if(rc==="K")       {brSym="K"; brColor="#c00";}
-  else if(rc==="SK") {brSym="SK"; brColor="#8b0000";}
+  if(rc==="K")       {brSym=""; brColor="#c00";}
+  else if(rc==="SK") {brSym=""; brColor="#c00";}
   else if(rc==="BB") {brSym="B"; brColor="#0066cc";}
   else if(rc==="HBP"){brSym="死"; brColor="#f57c00";}
   else if(rc==="GO"||rc==="SAC"){
@@ -1580,7 +1580,7 @@ function wasedaDiamondSvg(ab,size){
     brColor="#e67e22"; // エラー出塁
   }
   else if(rc==="IFF"){brSym=f1?(f1+"IFF"):"IFF"; brColor="#546e7a";}
-  else if(rc==="KWP"){brSym="振逃"; brColor="#6a1b9a";}
+  else if(rc==="KWP"){brSym=""; brColor="#6a1b9a";}
   else if(rc==="OBI"){brSym="OBI"; brColor="#ad1457";}
   // ヒット系（守備番号付き）
   else if(rc==="1H"){var sbase=(ab.sym&&ab.sym.sym)||"H"; brSym=sbase; brColor="#1b7a3e";}
@@ -1615,6 +1615,41 @@ function wasedaDiamondSvg(ab,size){
     centerElem='<text x="'+c+'" y="'+(c+outFsz*0.38)+'" text-anchor="middle" font-size="'+outFsz+'" font-weight="900" fill="#333" font-family="serif">'+outRoman+'</text>';
   }
 
+  // ── 三振の特殊記号 ──
+  var specialKSvg="";
+  if(rc==="SK"){
+    // 空振り三振: 普通のK
+    var kx2=size-3, ky2=size-5, kfs2=Math.round(size*0.12);
+    specialKSvg='<text x="'+kx2+'" y="'+ky2+'" text-anchor="end" font-size="'+kfs2+'" font-weight="900" fill="#c00" font-family="monospace">K</text>';
+  } else if(rc==="K"){
+    // 見逃し三振: Kの右上に小さい○
+    var kx3=size-3, ky3=size-5, kfs3=Math.round(size*0.12);
+    specialKSvg='<text x="'+kx3+'" y="'+ky3+'" text-anchor="end" font-size="'+kfs3+'" font-weight="900" fill="#c00" font-family="monospace">K</text>'+
+      '<circle cx="'+(kx3+1)+'" cy="'+(ky3-kfs3+1)+'" r="'+(size*0.025)+'" fill="none" stroke="#c00" stroke-width="1.2"/>';
+  } else if(rc==="KWP"){
+    // 振り逃げ: 左右反転K
+    var kx4=size-3, ky4=size-5, kfs4=Math.round(size*0.12);
+    specialKSvg='<g transform="translate('+(kx4)+','+(ky4)+')"><text x="0" y="0" text-anchor="end" font-size="'+kfs4+'" font-weight="900" fill="#6a1b9a" font-family="monospace" transform="scale(-1,1)">K</text></g>';
+  } else if(rc==="K3B"){
+    // 3バント三振: K with ◆ (filled diamond mark)
+    var kx5=size-3, ky5=size-5, kfs5=Math.round(size*0.12);
+    specialKSvg='<text x="'+(kx5-kfs5*0.5)+'" y="'+ky5+'" text-anchor="end" font-size="'+(kfs5*0.6)+'" font-weight="900" fill="#c00" font-family="sans-serif">◆</text>'+
+      '<text x="'+kx5+'" y="'+ky5+'" text-anchor="end" font-size="'+kfs5+'" font-weight="900" fill="#c00" font-family="monospace">K</text>';
+  }
+
+  // 残塁: 中央にℓ（アウトでも得点でもない、チェンジ時に塁に残った走者）
+  if(!centerElem && ab.isLeftOnBase){
+    var lobFsz=size*0.22;
+    centerElem='<text x="'+c+'" y="'+(c+lobFsz*0.35)+'" text-anchor="middle" font-size="'+lobFsz+'" font-weight="400" fill="#555" font-family="serif" font-style="italic">ℓ</text>';
+  }
+
+  // ── 左下: 得点時に打ってくれた打者の打順（生還に貢献した打者）──
+  var blElem="";
+  if(ab.scoredByBatterOrder && ab.scoredByBatterOrder > 0){
+    var blx=3, bly=size-4, blfs=Math.round(size*0.09);
+    blElem='<text x="'+blx+'" y="'+bly+'" text-anchor="start" font-size="'+blfs+'" font-weight="bold" fill="#c62828" font-family="monospace">'+ab.scoredByBatterOrder+'</text>';
+  }
+
   // 右下テキスト描画
   function drawBR(sym,x,y,fsz,col){
     if(!sym)return"";
@@ -1635,8 +1670,10 @@ function wasedaDiamondSvg(ab,size){
     var pcx=size*0.06;
     var pcy1=size*0.50, pcy2=size*0.88;
     var pcfs=Math.round(size*0.10);
+    var pcPitchNum=ab.pitcherChangedAtPitch||"";
     pitcherChangeMark='<line x1="'+pcx+'" y1="'+pcy1+'" x2="'+pcx+'" y2="'+pcy2+'" stroke="#1565c0" stroke-width="2.5" stroke-linecap="round"/>'+
-      '<text x="'+(pcx+4)+'" y="'+(pcy2)+'" font-size="'+pcfs+'" fill="#1565c0" font-weight="bold">P</text>';
+      '<text x="'+(pcx+4)+'" y="'+(pcy2)+'" font-size="'+pcfs+'" fill="#1565c0" font-weight="bold">P</text>'+
+      (pcPitchNum?'<text x="'+(pcx+4)+'" y="'+(pcy1-2)+'" font-size="'+(pcfs*0.8)+'" fill="#1565c0" font-weight="bold">'+pcPitchNum+'球</text>':"");
   }
 
   // ── 走者アウトマーク（牽制・盗塁失敗・走塁死など） ──
@@ -1694,10 +1731,20 @@ function wasedaDiamondSvg(ab,size){
       var my=(fromPt[1]+toPt[1])/2;
       var fs2=Math.round(size*0.095);
       var color2=(ev.code==="SB"||ev.code==="DS"||ev.code==="TS")?"#1565c0":"#6a1b9a";
+      // イベント記号
       runnerEventMarks+=
         '<text x="'+mx+'" y="'+(my+fs2*0.35)+'" text-anchor="middle"'+
         ' font-size="'+fs2+'" font-weight="bold" fill="'+color2+'"'+
         ' font-family="monospace">'+sym2+'</text>';
+      // 投球番号ティック（何球目の時のイベントか）
+      if(ev.pitchNum>0){
+        var tickStr="";
+        for(var ti=0;ti<Math.min(ev.pitchNum,5);ti++){tickStr+="'";}
+        if(ev.pitchNum>5)tickStr=String(ev.pitchNum);
+        runnerEventMarks+=
+          '<text x="'+(mx+fs2*0.5)+'" y="'+(my-fs2*0.2)+'" text-anchor="start"'+
+          ' font-size="'+(fs2*0.7)+'" fill="'+color2+'" font-family="monospace">'+tickStr+'</text>';
+      }
     });
   }
 
@@ -1707,6 +1754,8 @@ function wasedaDiamondSvg(ab,size){
     runLines+
     bRect(home)+bRect(first)+bRect(sec)+bRect(third)+
     scoredRing+centerElem+pitcherChangeMark+runnerOutMarks+runnerEventMarks+
+    blElem+
+    specialKSvg+
     drawBR(brSym,size-2,size-4,9,brColor)+
     drawTR(trSym,size-2,10,9,"#c62828")+
     '</svg>';
@@ -1731,7 +1780,7 @@ function buildSym(sel){
     var hitDesc=ht==="1H"?(isInfield?"内野安打":"前ヒット"):ht==="2H"?"二塁打":"三塁打";
     var desc=(f1?POSITIONS[f1]||"":"")+hitDesc;
     if(sel.extraBase)desc+=" →"+sel.extraBase+"塁";
-    return{sym,desc,color:"#1b7a3e"};
+    return{sym:sym,desc:desc,color:"#1b7a3e"};
   }
   if(ht==="HR")return{sym:"HR",  desc:"本塁打",        color:"#e53935"};
   if(ht==="RH")return{sym:"RH",  desc:"ランニングHR",  color:"#b71c1c"};
@@ -1851,7 +1900,7 @@ function undoLastAtBat(){
   S.pendingOrders=snap.pendingOrders||[];
   S.editingSlot=snap.editingSlot||null;
   if(snap.pitchers)S.pitchers=snap.pitchers;
-  S.curPitches=[];S.autoMsg=null;S.pendingRunnerEvents=[];S._pitcherChangedMidAB=false;S.modal=null;
+  S.curPitches=[];S.autoMsg=null;S.pendingRunnerEvents=[];S._pitcherChangedMidAB=false;S._pitcherChangedAtPitch=0;S.modal=null;
   render();
 }
 
@@ -2319,7 +2368,25 @@ function showChangeOverlay(nextSide,nextInnNum,callback){
 
 function doChange(){
   var oldSide=S.curSide, oldInning=S.curInning;
-  // チェンジ時に走者をリセットすることをユーザーに認識させる
+  // ── 残塁マーク：チェンジ時に塁に残っている走者のダイヤモンドに残塁マークをつける ──
+  if(S.curBases&&S.curBases.length>0){
+    var changeInn=(S.game[S.curSide]||[])[S.curInning];
+    if(changeInn&&changeInn.atBats){
+      S.curBases.forEach(function(base){
+        var ri=S.runnerInfo&&S.runnerInfo[base];
+        if(!ri)return;
+        var ord=ri.order;
+        // その走者が出塁した打席を見つけてisLeftOnBase=trueにする
+        for(var ai=changeInn.atBats.length-1;ai>=0;ai--){
+          if(changeInn.atBats[ai].order===ord){
+            changeInn.atBats[ai].isLeftOnBase=true;
+            break;
+          }
+        }
+      });
+    }
+  }
+  // チェンジ時に走者をリセット
   // （走者は次の攻撃には引き継がれない — スコアブックの規則）
   S.curPitches=[];S.curBases=[];S.outs=0;S.modal=null;S.autoMsg=null;S.runnerInfo={};
   var nextSide=S.curSide==="top"?"bottom":"top";
@@ -2573,6 +2640,7 @@ function commitAtBat(rc,sym,sel){
     defense:sel||{},
     // 打席中に投手交代があった場合のフラグ（スコアブック表示用）
     pitcherChanged:!!(S._pitcherChangedMidAB||sel&&sel.pitcherChanged),
+    pitcherChangedAtPitch:S._pitcherChangedAtPitch||0,
     inning:S.curInning,side:S.curSide,
     runPath:rp,
     reachedBases:rp.filter(function(b){return b!=="H";}),
@@ -2625,6 +2693,31 @@ function commitAtBat(rc,sym,sel){
   inn.earnedRuns=(inn.earnedRuns||0)+earnedScored;
   // 投手に被打席・失点を記録
   recordBatterToPitcher(rc, scored, earnedScored);
+
+  // 得点した走者の元の打席に「どの打者のおかげで生還したか」を記録
+  if(scored>0 && !S.editingSlot){
+    var batterOrder=curOrder()+1;
+    // 元の走者のうち、新しいbasesにいない走者＝得点した走者
+    (S.curBases||[]).forEach(function(oldBase){
+      if(!newBases.includes(oldBase)){
+        // この走者が得点した
+        var ri2=S.runnerInfo&&S.runnerInfo[oldBase];
+        if(ri2&&ri2.order){
+          // ri2.orderの打席を探してscoredByBatterOrderを記録
+          var sInn=curInn();
+          if(sInn&&sInn.atBats){
+            for(var sai=sInn.atBats.length-1;sai>=0;sai--){
+              if(sInn.atBats[sai].order===ri2.order){
+                sInn.atBats[sai].scoredByBatterOrder=batterOrder;
+                break;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
   S.curPitches=[];S.autoMsg=null;S.pendingRunnerEvents=[];
 
   if(newOuts>=3){
@@ -2799,6 +2892,7 @@ function recordChange(type,name,num){
     changePitcher(name,num);
     // 打席途中の投手交代フラグ（次の commitAtBat でダイヤモンドにマーク）
     S._pitcherChangedMidAB=true;
+    S._pitcherChangedAtPitch=S.curPitches.length;
   }
   S.modal=null;render();
 }
@@ -2990,7 +3084,7 @@ function startGame(){
   if(!S.game||Object.keys(S.game).length===0)S.game=makeGame();
   S.curSide="top";S.curInning=0;
   S.curBases=[];S.outs=0;S.curPitches=[];S.modal=null;S.autoMsg=null;S.history=[];
-  S.runnerInfo={};S._pendingChange=false;S._pitcherChangedMidAB=false;
+  S.runnerInfo={};S._pendingChange=false;S._pitcherChangedMidAB=false;S._pitcherChangedAtPitch=0;
   // 試合開始時: pendingOrdersを全てクリア
   S.pendingOrders=[];
   S.editingSlot=null;
@@ -3757,6 +3851,9 @@ function renderModal(){
       {cat:"batting", title:"スリーバント失敗", sym:"●K",
        diamond:{brText:"●K", brColor:"#c00"},
        note:"2ストライクからのバントファウルで三振"},
+      {cat:"batting", title:"バント三振（特殊記号）", sym:"K◆",
+       diamond:{brText:"K◆", brColor:"#c00"},
+       note:"3球でバント失敗による三振。K◆で示す"},
       {cat:"batting", title:"ファーストゴロ（ピッチャーへトス）", sym:"3-1A",
        diamond:{brText:"3-1A", brColor:"#333"},
        note:"一塁手(3)から投手(1)へトス。Aはアシスト"},
@@ -3791,16 +3888,25 @@ function renderModal(){
       // ─── ランナー ───
       {cat:"runner", title:"盗塁（スチール）", sym:"S",
        diamond:{sideText:"S", sideTextPos:"top", sideTextColor:"#1565c0"},
-       note:"盗塁成功はS。どの投球のタイミングかを「'」「''」で示す場合あり"},
+       note:"盗塁成功はS。走塁線の脇に『投球ティック』として「'」「''」で示す"},
+      {cat:"runner", title:"盗塁（投球ティック付き）", sym:"S''",
+       diamond:{sideText:"S''", sideTextPos:"top", sideTextColor:"#1565c0"},
+       note:"2球目の盗塁の場合、『S''』と表示。何球目かが記載される"},
       {cat:"runner", title:"盗塁死", sym:"CS",
        diamond:{sideText:"CS", sideTextPos:"top", sideTextColor:"#c62828"},
        note:"盗塁失敗。Caught Stealing"},
       {cat:"runner", title:"ワイルドピッチ", sym:"WP",
        diamond:{sideText:"WP", sideTextPos:"top", sideTextColor:"#283593"},
-       note:"暴投。どの投球のタイミングかを「'」「''」で示す場合あり"},
+       note:"暴投。走塁線脇に『投球ティック』として「'」「''」で示す"},
+      {cat:"runner", title:"ワイルドピッチ（投球ティック付き）", sym:"WP'",
+       diamond:{sideText:"WP'", sideTextPos:"top", sideTextColor:"#283593"},
+       note:"1球目の暴投の場合、『WP'』と表示"},
       {cat:"runner", title:"捕逸（パスボール）", sym:"PB",
        diamond:{sideText:"PB", sideTextPos:"top", sideTextColor:"#283593"},
-       note:"捕手が後ろに逸らした。どの投球かを示す場合あり"},
+       note:"捕手が後ろに逸らした。走塁線脇に投球ティック付き"},
+      {cat:"runner", title:"捕逸（投球ティック付き）", sym:"PB'''",
+       diamond:{sideText:"PB'''", sideTextPos:"top", sideTextColor:"#283593"},
+       note:"3球目の捕逸の場合、『PB'''』と表示"},
       {cat:"runner", title:"ボーク", sym:"BK",
        diamond:{sideText:"BK", sideTextPos:"top", sideTextColor:"#6a1b9a"},
        note:"投手の反則動作。全走者が1つ進む"},
@@ -3842,12 +3948,18 @@ function renderModal(){
       {cat:"other", title:"得点（自責点なし）", sym:"○白抜き",
        diamond:{centerCircleEmpty:true},
        note:"失策で出塁した走者が生還しても自責点なし。白抜きの丸で示す"},
-      {cat:"other", title:"残塁", sym:"ℓ",
-       diamond:{brText:"l", brColor:"#888"},
-       note:"チェンジ時に塁に残った走者。ℓ (LEFT ON BASE)"},
-      {cat:"other", title:"投手交代", sym:"P",
+      {cat:"other", title:"残塁（左に残った走者）", sym:"ℓ",
+       diamond:{centerText:"ℓ", brText:""},
+       note:"チェンジ時に塁に残った走者。ダイヤモンド中央に小さい『ℓ』で示す"},
+      {cat:"other", title:"得点時の生還打者", sym:"①",
+       diamond:{centerCircle:true, brText:"①"},
+       note:"得点した走者の元の打席左下に『生還に貢献した打者の打順』を記載"},
+      {cat:"other", title:"投手交代（マーク）", sym:"P",
        diamond:{pitcherLine:true},
-       note:"左縦線＋Pで投手交代を示す"}
+       note:"左縦線＋Pで投手交代を示す。何球目かが記載される場合あり"},
+      {cat:"other", title:"投手交代（投球数記載）", sym:"P②",
+       diamond:{pitcherLine:true},
+       note:"投手交代が中盤に起きた場合、『②球』と何球目かが記録される"}
     ];
 
     var catTabs=[
@@ -4718,6 +4830,9 @@ function buildWriteGuide(ab){
 var SCOREBOOK_TIPS=[
   // ─── 投球・カウント ───
   {q:"投球の記録方法",a:"①のボタンを押して投球を記録します。B=ボール、S=見逃しストライク、SW=空振り、F=ファウル、死=デッドボール。4ボールで四球、ストライク3つで三振と自動判定します"},
+  {q:"見逃し三振 vs 空振り三振",a:"見逃し三振（K）はバットを振らずストライク3つ、ダイヤモンド右下に「K」と小さい◯が表示されます。空振り三振（SK）はバットを振ってストライク3つ、「K」だけが表示されます"},
+  {q:"振り逃げ三振",a:"空振り三振後に捕手がボールを落とすと振り逃げです。打者は1塁へ向かえます。ダイヤモンド右下に左右反転した「Ꝃ」が表示されます"},
+  {q:"バント三振",a:"3球でバント失敗した場合は特殊な「K◆」記号が表示されます"},
   {q:"三振した",a:"①でB・S・SWを入力すると自動で「K（見逃し）」または「SK（空振り）」が記録されます。3球目で自動表示されます"},
   {q:"フォアボール（四球）",a:"①でボールを4つ入力すると自動で記録。打者は1塁へ進みます"},
   {q:"死球（体にボールが当たった）",a:"①の「死」ボタンを押すと自動記録。打者は1塁へ進みます"},
@@ -4730,6 +4845,7 @@ var SCOREBOOK_TIPS=[
   {q:"スクイズ失敗",a:"②アウトタブ→「スクイズ失敗」を選びます。バント空振りで三振し、3塁走者もアウトになります（同時に2アウト）"},
   {q:"犠牲フライ",a:"②アウトタブ→「犠牲フライ」を選びます（3塁に走者がいるときのみ）。フライが捕られても3塁走者がホームインします"},
   {q:"内野フライ（インフィールドフライ）",a:"②アウトタブ→「内野フライ」を選びます。1・2塁に走者がいるとき審判が宣告する特別ルール。自動的にアウトになり走者は動けません"},
+  {q:"バントエラー",a:"バントしたがエラーになった場合、ダイヤモンドに守備番号+「E」が表示されます"},
   // ─── ヒット・出塁 ───
   {q:"ヒットを打った",a:"②ヒットタブ→「ヒット」「二塁打」「三塁打」「ホームラン」から選びます。守備ウィザードでどこへ飛んだかを入力します"},
   {q:"バントヒット",a:"②ヒットタブ→「バントヒット」を選びます。バントしたが守備が間に合わず出塁した場合です"},
@@ -4737,14 +4853,19 @@ var SCOREBOOK_TIPS=[
   {q:"野選で出塁（守備が他の走者を狙った）",a:"②エラー等タブ→「野選で出塁」を選びます。守備が打者ではなく別の走者をアウトにしようとしたため打者が出塁した場合です"},
   {q:"振り逃げ",a:"空振り三振後に捕手がボールを逸らしたら振り逃げです。投球入力後に「振り逃げか？」と自動で聞かれます"},
   // ─── 走者イベント ───
-  {q:"盗塁が起きた",a:"③走者イベント→「盗塁」を押します。走者が1人なら即記録。2人いる場合は誰が走ったかを選びます"},
-  {q:"暴投（投球が大きく逸れた）",a:"③走者イベント→「暴投」を押します。走者が何塁進んだかを確認して記録します"},
-  {q:"捕逸（捕手が後ろに逸らした）",a:"③走者イベント→「捕逸」を押します。暴投と同様に走者が進みます"},
-  {q:"ボーク（投手の反則動作）",a:"③走者イベント→「ボーク」を押します。全走者が1つ進みます"},
+  {q:"盗塁が起きた",a:"③走者イベント→「盗塁」を押します。走者が1人なら即記録。2人いる場合は誰が走ったかを選びます。ダイヤモンド走塁線に「S」と投球ティック（何球目かを示す「'」マーク）が表示されます"},
+  {q:"投球ティック（投球紐付け）",a:"盗塁、暴投、捕逸などのイベントは何球目に起きたかを走塁線の脇に「'」で表示します。例えば3球目なら「'''」と3つ表示されます"},
+  {q:"暴投（投球が大きく逸れた）",a:"③走者イベント→「暴投」を押します。走者が何塁進んだかを確認して記録します。ダイヤモンドに「WP」と投球ティックが表示されます"},
+  {q:"捕逸（捕手が後ろに逸らした）",a:"③走者イベント→「捕逸」を押します。暴投と同様に走者が進みます。ダイヤモンドに「PB」と投球ティックが表示されます"},
+  {q:"ボーク（投手の反則動作）",a:"③走者イベント→「ボーク」を押します。全走者が1つ進みます。ダイヤモンドに「BK」と投球ティックが表示されます"},
   {q:"牽制でアウト",a:"③走者イベント→「牽制アウト」を押します。元の打者のダイヤモンドに後から✕マークが記録されます"},
   {q:"走者が挟まれてアウト（ランダウン）",a:"③走者イベント→「挟殺」を押します"},
+  // ─── 得点・残塁 ───
+  {q:"得点が記録された",a:"走者がホームインするとダイヤモンドの中央に赤い◯が表示されます。その走者の元の打席左下には「生還に貢献した打者の打順」が赤い数字で表示されます"},
+  {q:"残塁（塁に残った走者）",a:"チェンジ時に塁に残った走者の元の打席ダイヤモンド中央に「ℓ」という記号が表示されます。これは得点でもアウトでもなく、攻撃交代時に塁に残った走者を示します"},
   // ─── 投手・記録管理 ───
-  {q:"投手が交代した",a:"③走者エリアの「投手交代」ボタンを押して新投手の名前と番号を入力します。投手タブで成績を確認できます"},
+  {q:"投手が交代した",a:"③走者エリアの「投手交代」ボタンを押して新投手の名前と番号を入力します。投手交代が起きた打席のダイヤモンド左側に縦線と「P」が表示され、何球目で交代したかが「○球」で記録されます"},
+  {q:"投手交代と投球ティック",a:"投手交代が中盤に起きた場合、ダイヤモンド左側に交代時の投球数が表示されます（例：「5球」）。これにより正確な交代タイミングが記録されます"},
   {q:"得点が記録されていない",a:"③走者イベント→「得点追加」で手動で追加できます"},
   {q:"入力を間違えた",a:"画面下の「取り消す」ボタンで直前の打席に戻れます"},
   {q:"自責点って何？",a:"守備ミス（エラー）がなければ入らなかった可能性がある点は「非自責点」として投手の成績に含まれません。アプリが自動で判断します"},
