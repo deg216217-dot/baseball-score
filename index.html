@@ -81,6 +81,7 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 /* ===チェンジ演出=== */
 .change-overlay{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:changeAnim 1.6s ease forwards;pointer-events:none;}
 @keyframes changeAnim{0%{opacity:0;transform:scale(.85);}15%{opacity:1;transform:scale(1.05);}70%{opacity:1;}100%{opacity:0;transform:scale(1.1);}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 2px #ff8a80;}50%{box-shadow:0 0 0 5px rgba(255,138,128,.3);}}
 .change-overlay.to-top{background:linear-gradient(135deg,rgba(10,22,40,.9),rgba(26,58,110,.9));}
 .change-overlay.to-bottom{background:linear-gradient(135deg,rgba(26,10,10,.9),rgba(123,26,42,.9));}
 .change-big{font-size:52px;font-weight:900;letter-spacing:2px;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.5);}
@@ -102,6 +103,7 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 @keyframes pop{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
 .auto-banner.bb{background:#e3f2fd;color:#0d47a1;border:1.5px solid #1565c0;}
 .auto-banner.k{background:#ffebee;color:#b71c1c;border:1.5px solid #c62828;}
+.auto-banner.info{background:#fff8e1;color:#e65100;border:1.5px solid #ffa000;font-size:12px;}
 
 /* ===投球ボタン=== */
 .pitch-row{display:flex;align-items:center;gap:4px;}
@@ -565,7 +567,7 @@ var RESULT_GROUPS={
     {code:"SQE", label:"スクイズ失敗",sub:"同時に2アウト",color:"#455a64"},
     {code:"SF",  label:"犠牲フライ", sub:"3塁走者生還",  color:"#455a64",wiz:true},
     {code:"DP",  label:"ゲッツー",   sub:"2人同時アウト", color:"#455a64",wiz:true},
-    {code:"K3B", label:"3バント三振",sub:"バント失敗",    color:"#455a64"}
+    {code:"K3B", label:"3バント三振",sub:"バントで3ストライク",    color:"#455a64"}
   ],
 
   // ─── ヒット ───
@@ -582,7 +584,7 @@ var RESULT_GROUPS={
   reach:[
     {code:"E",   label:"エラーで出塁",sub:"守備ミス",   color:"#0277bd",wiz:true},
     {code:"FC",  label:"野選で出塁",  sub:"守備の選択", color:"#0277bd",wiz:true},
-    {code:"SACE",label:"バントエラー",sub:"バントミス",  color:"#0277bd",wiz:true},
+    {code:"SACE",label:"バントエラー出塁",sub:"ミスで打者が出塁",  color:"#0277bd",wiz:true},
     {code:"CI",  label:"打撃妨害",    sub:"捕手のミス", color:"#0277bd"},
     {code:"OBI", label:"走塁妨害",    sub:"野手のミス", color:"#0277bd"}
   ]
@@ -886,7 +888,17 @@ function initState(){
     // ── 投手管理 ──
     pitchers:{ top:[], bottom:[] },
     // ── 打席中投手交代フラグ ──
-    _pitcherChangedMidAB: false, _pitcherChangedAtPitch: 0
+    _pitcherChangedMidAB: false, _pitcherChangedAtPitch: 0,
+    // ── 試合メタ情報 ──
+    meta:{ date:"", tournament:"", venue:"", weather:"" },
+    // ── イニング数・試合終了 ──
+    maxInnings: 7,
+    gameEnded: false,
+    gameResult: null,  // "win" | "lose" | "draw" | null
+    // ── コールドゲーム ──
+    coldGame: { enabled: false, runs: 10, fromInning: 3 },
+    // ── タイブレーク ──
+    tiebreaker: { enabled: false }  // 延長戦で2塁走者スタート
   };
 }
 
@@ -1381,6 +1393,7 @@ function checkAuto(pitches){
   if(cnt.s>=3){
     if(last==="S")return"K";
     if(last==="SW")return"KWP_READY";
+    if(last==="F")return"K3B_HINT";
   }
   return null;
 }
@@ -2023,7 +2036,6 @@ function defWizConfirm(){
   // FOエラー落球出塁 → rc="E"（通常通り）
   if(sel.hitType==="GO"&&sel.outcome==="reach") rc="GO_E";
   else if(sel.hitType==="SAC"&&sel.outcome==="reach") rc="SACE";
-  else if(sel.hitType==="FO"&&sel.outcome==="reach") rc="E";
   S.modal=null;
   startRunnerConfirmIfNeeded(rc, buildSym(sel), sel);
 }
@@ -2417,8 +2429,42 @@ function doChange(){
   S.curPitches=[];S.curBases=[];S.outs=0;S.modal=null;S.autoMsg=null;S.runnerInfo={};
   var nextSide=S.curSide==="top"?"bottom":"top";
   var nextInning=S.curSide==="top"?S.curInning:Math.min(S.curInning+1,MAX_INNINGS-1);
+  // ── コールドゲーム判定（後攻チェンジ後＝イニング完了時）──
+  if(S.curSide==="bottom"&&!S.gameEnded){
+    var cg=S.coldGame||{};
+    if(cg.enabled){
+      var completedInning=S.curInning+1; // 1-indexed
+      if(completedInning>=cg.fromInning){
+        var awayTot=totalScore("top"),homeTot=totalScore("bottom");
+        var diff=Math.abs(awayTot-homeTot);
+        if(diff>=cg.runs){
+          S.gameEnded=true;
+          S.gameResult=awayTot>homeTot?"win":"lose";
+          showChangeOverlay(nextSide,nextInning+1,function(){
+            S.curSide=nextSide;S.curInning=nextInning;
+            S.tab="scoreboard";
+            alert("コールドゲーム成立！ "+awayTot+"-"+homeTot+" （"+diff+"点差）\nスコアボードで結果を確認してください。");
+            render();
+          });
+          return;
+        }
+      }
+    }
+  }
   showChangeOverlay(nextSide,nextInning+1,function(){
-    S.curSide=nextSide;S.curInning=nextInning;render();
+    S.curSide=nextSide;S.curInning=nextInning;
+    // ── タイブレーク: 延長イニングで2塁走者自動配置 ──
+    if(S.tiebreaker&&S.tiebreaker.enabled&&nextInning>=(S.maxInnings||7)){
+      if(!S.curBases.includes(2)){
+        S.curBases.push(2);
+        // 走者情報は不明なので仮のorderを設定
+        if(!S.runnerInfo)S.runnerInfo={};
+        var ord9=curOrder()+1;
+        S.runnerInfo[2]={order:ord9,base:2,tiebreaker:true};
+        S.autoMsg={type:"info",text:"⚡ タイブレーク！ 2塁に走者が配置されました"};
+      }
+    }
+    render();
   });
 }
 
@@ -2426,7 +2472,11 @@ function addPitch(code){
   var np=S.curPitches.concat([code]);
   var auto=checkAuto(np);
   S.curPitches=np;S.autoMsg=null;
-  if(auto){S.modal={type:"auto_result",autoCode:auto};}
+  if(auto==="K3B_HINT"){
+    S.autoMsg={type:"info",text:"⚠ 3バント！ 三振なら「✕アウト」→「3バント三振」を選択。続行も可。"};
+  } else if(auto){
+    S.modal={type:"auto_result",autoCode:auto};
+  }
   render();
 }
 
@@ -2630,8 +2680,22 @@ function commitAtBat(rc,sym,sel){
   saveSnapshot();
   var p=curPlayer();
   var rp=calcRunPath(rc,sel);
-  // 投球数を投手に加算（commitAtBat呼び出し時点でS.curPitchesが残っている）
-  addPitchToPitcher(S.curPitches.length);
+  // 投球数を投手に加算（打席中交代があれば旧投手と新投手に分割）
+  if(S._pitcherChangedMidAB&&S._pitcherChangedAtPitch>0){
+    var ds4=defSide();
+    var ps4=S.pitchers[ds4]||[];
+    var atPitch=S._pitcherChangedAtPitch;
+    // 旧投手（現在の1つ前）に交代前の投球数を加算
+    if(ps4.length>=2){
+      var oldP=ps4[ps4.length-2];
+      if(oldP)oldP.pitchCount=(oldP.pitchCount||0)+atPitch;
+    }
+    // 新投手（現在）に残りの投球数を加算
+    var remainPitches=Math.max(0,S.curPitches.length-atPitch);
+    if(remainPitches>0)addPitchToPitcher(remainPitches);
+  } else {
+    addPitchToPitcher(S.curPitches.length);
+  }
   // 現在打者の order を sel に付加（runnerInfoの order追跡用）
   if(!sel)sel={};
   sel._batterOrder = curOrder()+1;
@@ -2680,7 +2744,10 @@ function commitAtBat(rc,sym,sel){
     // タイムリー情報（得点に絡んだ打席かどうか）
     isTimely:scored>0&&["1H","2H","3H","HR","RH","BH","SF","SQ"].includes(rc),
     isForcedIn:scored>0&&["BB","HBP","CI","OBI","KWP"].includes(rc),
-    timelyCount:scored
+    timelyCount:scored,
+    // 得点圏打率(RISP)追跡: 打席時に得点圏(2塁か3塁)に走者がいたか
+    runnersOnBase:S.curBases.slice(),
+    ruspAtBat:S.curBases.some(function(b){return b===2||b===3;})
   };
   // editingSlot（遡り入力 or 既存打席修正）の場合
   if(S.editingSlot){
@@ -2916,9 +2983,21 @@ function recordChange(type,name,num){
   }
   if(type==="pitcher"){
     changePitcher(name,num);
-    // 打席途中の投手交代フラグ（次の commitAtBat でダイヤモンドにマーク）
     S._pitcherChangedMidAB=true;
     S._pitcherChangedAtPitch=S.curPitches.length;
+  }
+  // 代打・代走: 現在の打者をsubbedとしてマーク、新選手のデータで上書き
+  if(type==="hitter"||type==="runner"){
+    var team=curTeam();
+    var ord=curOrder();
+    if(team&&team.players&&team.players[ord]){
+      // 旧選手に交代フラグ
+      team.players[ord].subbed=true;
+      team.players[ord].subbedBy=name||"?";
+      // 新選手の名前・番号を設定（打順スロットを引き継ぎ）
+      if(name) team.players[ord].name=name;
+      if(num)  team.players[ord].number=num;
+    }
   }
   S.modal=null;render();
 }
@@ -2999,6 +3078,7 @@ function pickTutorialExamples(){
 // データ永続化（localStorage）
 // ============================================================
 var STORAGE_KEY = 'baseball_score_v1';
+var SEASON_KEY = 'baseball_score_season_v1';
 
 function saveToStorage(){
   try{
@@ -3016,7 +3096,13 @@ function saveToStorage(){
       _pendingChange:S._pendingChange,
       pendingOrders:S.pendingOrders,
       pitchers:S.pitchers,
-      history:S.history
+      history:S.history,
+      meta:S.meta,
+      maxInnings:S.maxInnings,
+      gameEnded:S.gameEnded,
+      gameResult:S.gameResult,
+      coldGame:S.coldGame,
+      tiebreaker:S.tiebreaker
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }catch(e){ /* プライベートモード等でlocalStorageが使えない場合は無視 */ }
@@ -3046,12 +3132,44 @@ function loadFromStorage(){
     S.pendingOrders  = data.pendingOrders||[];
     S.pitchers   = data.pitchers||{top:[],bottom:[]};
     S.history    = data.history||[];
+    S.meta       = data.meta||{date:"",tournament:"",venue:"",weather:""};
+    S.maxInnings = data.maxInnings||7;
+    S.gameEnded  = data.gameEnded||false;
+    S.gameResult = data.gameResult||null;
+    S.coldGame   = data.coldGame||{enabled:false,runs:10,fromInning:3};
+    S.tiebreaker = data.tiebreaker||{enabled:false};
     // transient はクリア
     S.modal=null; S.autoMsg=null; S.curPitches=[];
     S.pendingRunnerEvents=[]; S.editingSlot=null;
     S._pitcherChangedMidAB=false; S._pitcherChangedAtPitch=0;
     return true;
   }catch(e){return false;}
+}
+
+function saveGameToSeason(){
+  try{
+    var awayS=totalScore("top"), homeS=totalScore("bottom");
+    var entry={
+      id: Date.now(),
+      date: (S.meta&&S.meta.date) ? S.meta.date : new Date().toISOString().slice(0,10),
+      tournament: (S.meta&&S.meta.tournament)||"",
+      venue: (S.meta&&S.meta.venue)||"",
+      away: S.awayTeam.name||"先攻",
+      home: S.homeTeam.name||"後攻",
+      awayScore: awayS,
+      homeScore: homeS,
+      result: S.gameResult||"draw",
+      innings: S.curInning+1,
+      maxInnings: S.maxInnings||7
+    };
+    var raw=localStorage.getItem(SEASON_KEY);
+    var list=[];
+    try{ list=JSON.parse(raw)||[]; }catch(e2){ list=[]; }
+    if(!Array.isArray(list)) list=[];
+    list.unshift(entry);
+    if(list.length>50) list=list.slice(0,50);
+    localStorage.setItem(SEASON_KEY, JSON.stringify(list));
+  }catch(e){}
 }
 
 // ============================================================
@@ -3095,6 +3213,65 @@ function renderSetup(){
         POS_OPTIONS.map(function(n){return'<option value="'+n+'"'+(p.position===n?" selected":"")+'>'+POSITIONS[n]+'</option>';}).join("")+
       '</select></div>';
   }).join("");
+  var meta=S.meta||{};
+  var todayStr=meta.date||(function(){var d=new Date();return d.getFullYear()+"-"+(d.getMonth()<9?"0":"")+(d.getMonth()+1)+"-"+(d.getDate()<10?"0":"")+d.getDate();})();
+  var metaSection='<div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px 12px;margin-bottom:10px;">'+
+    '<div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:bold;margin-bottom:8px;letter-spacing:.5px">試合情報（任意）</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'+
+      '<input type="date" id="metaDate" value="'+todayStr+'" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;" placeholder="日付">'+
+      '<input type="text" id="metaTournament" value="'+(meta.tournament||"")+'" placeholder="大会・試合名" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
+      '<input type="text" id="metaVenue" value="'+(meta.venue||"")+'" placeholder="球場・グラウンド名" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
+      '<select id="metaWeather" style="background:rgba(30,30,50,.95);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
+        ['','晴れ☀️','曇り☁️','雨🌧️','強風💨'].map(function(w){return'<option value="'+w+'"'+(meta.weather===w?' selected':'')+'>'+( w||'天気を選択')+'</option>';}).join('')+
+      '</select>'+
+    '</div>'+
+    '<div style="margin-top:8px;">'+
+      '<div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:4px;">イニング数</div>'+
+      '<div style="display:flex;gap:6px;">'+
+        [5,6,7,9].map(function(n){
+          var sel=(S.maxInnings||7)===n;
+          return'<button type="button" id="maxInn'+n+'" style="flex:1;padding:7px 4px;border-radius:7px;border:2px solid '+(sel?'#fff':'rgba(255,255,255,.25)')+';background:'+(sel?'rgba(255,255,255,.25)':'transparent')+';color:#fff;font-size:13px;font-weight:'+(sel?'bold':'normal')+';cursor:pointer;">'+n+'回</button>';
+        }).join('')+
+      '</div>'+
+    '</div>'+
+    (function(){
+      var tb=S.tiebreaker||{enabled:false};
+      return'<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,.15);padding-top:8px;">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
+          '<div>'+
+            '<span style="font-size:11px;color:rgba(255,255,255,.6);">タイブレーク（延長戦）</span>'+
+            '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:1px">延長から2塁走者スタート</div>'+
+          '</div>'+
+          '<button type="button" id="tiebreakerToggle" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(tb.enabled?'#fff':'rgba(255,255,255,.35)')+';background:'+(tb.enabled?'rgba(255,255,255,.25)':'transparent')+';color:#fff;font-size:12px;font-weight:bold;cursor:pointer;">'+(tb.enabled?'✓ 有効':'無効')+'</button>'+
+        '</div>'+
+      '</div>';
+    })()+
+    (function(){
+      var cg=S.coldGame||{enabled:false,runs:10,fromInning:3};
+      return'<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,.15);padding-top:8px;">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
+          '<span style="font-size:11px;color:rgba(255,255,255,.6);">コールドゲーム</span>'+
+          '<button type="button" id="coldGameToggle" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(cg.enabled?'#fff':'rgba(255,255,255,.35)')+';background:'+(cg.enabled?'rgba(255,255,255,.25)':'transparent')+';color:#fff;font-size:12px;font-weight:bold;cursor:pointer;">'+(cg.enabled?'✓ 有効':'無効')+'</button>'+
+        '</div>'+
+        (cg.enabled?
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:rgba(255,255,255,.7);">'+
+            '<div>'+
+              '<div style="margin-bottom:3px">点差</div>'+
+              '<select id="coldRunsDiff" style="background:rgba(30,30,50,.95);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:6px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
+                [5,7,8,10,12,15].map(function(n){return'<option value="'+n+'"'+(cg.runs===n?' selected':'')+'>'+n+'点差</option>';}).join('')+
+              '</select>'+
+            '</div>'+
+            '<div>'+
+              '<div style="margin-bottom:3px">適用回以降</div>'+
+              '<select id="coldFromInn" style="background:rgba(30,30,50,.95);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:6px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
+                [3,4,5,6].map(function(n){return'<option value="'+n+'"'+(cg.fromInning===n?' selected':'')+'>'+n+'回以降</option>';}).join('')+
+              '</select>'+
+            '</div>'+
+          '</div>'
+        :'')+
+      '</div>';
+    })()+
+  '</div>';
   return'<div class="setup-page">'+
     '<div class="setup-hdr"><div class="setup-title">⚾ スコア記録アプリ</div>'+
     '<div style="font-size:11px;color:rgba(255,255,255,.7);text-align:center;margin-bottom:8px;padding:0 4px">チーム名と選手名を確認して「試合開始」を押してください</div>'+
@@ -3102,7 +3279,7 @@ function renderSetup(){
         '<button class="ttbtn away'+(s==="away"?" active":"")+'" data-side="away">先攻チーム</button>'+
         '<button class="ttbtn home'+(s==="home"?" active":"")+'" data-side="home">後攻チーム</button>'+
       '</div></div>'+
-    '<div class="setup-body"><input class="team-name-input" type="text" placeholder="チーム名" aria-label="チーム名" value="'+team.name+'" data-field="teamname" data-side="'+s+'">'+rows+'</div>'+
+    '<div class="setup-body">'+metaSection+'<input class="team-name-input" type="text" placeholder="チーム名" aria-label="チーム名" value="'+team.name+'" data-field="teamname" data-side="'+s+'">'+rows+'</div>'+
     '<div class="setup-footer"><div style="font-size:11px;color:#888;text-align:center;margin-bottom:8px;padding:0 4px">選手名・背番号は試合中でも変更できます</div><button class="start-btn" id="startBtn">⚾ 試合開始！</button>'+
     '<button id="resetDataBtn" style="width:100%;margin-top:8px;background:none;border:1.5px solid #e53935;color:#e53935;border-radius:9px;padding:9px;font-size:13px;font-weight:bold;cursor:pointer;">🗑 データをリセット（記録を全て消去）</button></div>'+
   '</div>';
@@ -3172,6 +3349,7 @@ function startGame(){
   S.curSide="top";S.curInning=0;
   S.curBases=[];S.outs=0;S.curPitches=[];S.modal=null;S.autoMsg=null;S.history=[];
   S.runnerInfo={};S._pendingChange=false;S._pitcherChangedMidAB=false;S._pitcherChangedAtPitch=0;
+  S.tab="input";S.resultTab="hit";
   // 試合開始時: pendingOrdersを全てクリア
   S.pendingOrders=[];
   S.editingSlot=null;
@@ -3246,7 +3424,7 @@ function renderGame(){
             var nextName=nextP?(nextP.number?"#"+nextP.number+" ":"")+nextP.name:"";
             var pitcherLine=pt
               ?'<div class="footer-batter-sub" style="color:rgba(255,255,255,.7);display:flex;align-items:center;gap:3px;flex-wrap:wrap">投手 '+(pt.number?"#"+pt.number+" ":"")+pt.name+' '+pitchWarnBadge(pt.pitchCount||0)+(!(pt.pitchCount>=60)?'<span style="font-size:11px;opacity:.7">'+pt.pitchCount+'球</span>':'')+'</div>'
-              :'<div class="footer-batter-sub" style="color:rgba(255,255,255,.7)">'+pPos+' '+(curOrder()+1)+'番打者</div>';
+              :'<div class="footer-batter-sub" style="color:rgba(255,255,255,.6)">'+pPos+' '+(curOrder()+1)+'番打者</div>';
             var deckLine=nextName?'<div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:1px">次打者: '+nextName+'</div>':'';
             return pitcherLine+deckLine;
           })()+
@@ -3298,24 +3476,27 @@ function renderGame(){
     else if(gs>=2&&gb===0){gt="S2つ — あと1球で三振";}
     else if(gs>=2){gt="2ストライク中 — F(ファウル)はカウント増えません";}
     else{gt="打球が起きたら ↓ ② アウト・ヒット・出塁を選ぶ";}
-    guideBar='<div id="guideBarEl" style="background:'+gc+';color:#fff;padding:6px 14px;font-size:13px;font-weight:bold;text-align:center;flex-shrink:0;letter-spacing:.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+gt+'</div>';
+    // 「後で入力」をガイドバー右端に常時表示
+    var _skipable=(!S.editingSlot&&!S._pendingChange);
+    var _pc=0;
+    if(_skipable){
+      ["top","bottom"].forEach(function(sd){
+        (S.game[sd]||[]).forEach(function(inn){
+          (inn.slots||[]).forEach(function(sl){if(sl.type==="pending")_pc++;});
+        });
+      });
+    }
+    var skipGuideBtn=_skipable
+      ? '<button id="skipBatterBtn" style="flex-shrink:0;margin-left:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">'+
+          '⏭ 後で入力'+(_pc>0?'<span style="background:#fff;color:#e65100;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;">'+_pc+'</span>':'')+
+        '</button>'
+      : '';
+    guideBar='<div id="guideBarEl" style="background:'+gc+';color:#fff;padding:5px 10px;font-size:13px;font-weight:bold;display:flex;align-items:center;flex-shrink:0;">'+
+      '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.1px;">'+gt+'</span>'+
+      skipGuideBtn+
+    '</div>';
   }
-  // 「後で入力」浮きボタン（固定位置・フッターとガイドバーの上）
-  var skipFloatBtn="";
-  if(!S.editingSlot&&S.tab==="input"){
-    skipFloatBtn='<button id="skipBatterFooterBtn" style="'+
-      'position:fixed;right:10px;bottom:161px;'+
-      'height:36px;padding:0 14px;border-radius:18px;'+
-      'background:#e65100;'+
-      'box-shadow:0 2px 10px rgba(0,0,0,.35);'+
-      'border:none;color:#fff;font-size:12px;font-weight:bold;'+
-      'cursor:pointer;z-index:20;'+
-      'white-space:nowrap;letter-spacing:.3px;'+
-      '-webkit-tap-highlight-color:transparent;">'+
-      '後で入力'+
-    '</button>';
-  }
-  return'<div class="page-content">'+content+'</div>'+skipFloatBtn+guideBar+footer;
+  return'<div class="page-content">'+content+'</div>'+guideBar+footer;
 }
 
 function renderInputTab(){
@@ -3355,7 +3536,7 @@ function renderInputTab(){
   // cnt, b, sv は上で既に宣言済み
   // ガイドはrenderGame()側で生成・表示
 
-  // ── ① 投球ボタン ──
+  // ── ① 投球ボタン（全6個を1行・均等幅）──
   var pitchBtns=PITCH_BTNS.map(function(pb){
     return'<button class="btn '+pb.cls+dis+'" data-pitch="'+pb.code+'" aria-label="投球: '+pb.label+(pb.sub?' ('+pb.sub+')':'')+'">'+
       '<span style="line-height:1" aria-hidden="true">'+pb.label+'</span>'+
@@ -3427,17 +3608,6 @@ function renderInputTab(){
   var undoDisabled=S.history.length===0?" disabled":"";
   var undoCount=S.history.length>0?" ("+S.history.length+")":"";
 
-  // ── 「空欄にして次の打者へ」ボタン ──
-  // 遡り入力モードでなく、チェンジ待ちでもない通常状態でのみ表示
-  var skipBtn="";
-  if(!S.editingSlot&&!S._pendingChange){
-    var _curOrd=curOrderDisplay();
-    var _curP=curPlayer();
-    var _curName=(_curP&&_curP.name)||_curOrd+"番";
-    skipBtn='<button id="skipBatterBtn" style="background:#f8f9fa;border:2px dashed #bbb;color:#888;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:bold;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">'+
-      _curOrd+'番 '+_curName+' の記録を後回しにする'+
-    '</button>';
-  }
 
   return'<div style="padding:4px 8px 0;display:flex;flex-direction:column;gap:3px;">'+
     editingBanner+changeBanner+autoBanner+
@@ -3452,7 +3622,7 @@ function renderInputTab(){
           '<span style="font-size:10px;color:#aaa;margin-left:4px;font-weight:normal">1球ごとにタップ</span>')+
         '<button class="help-btn" id="helpPitchBtn" style="margin-left:auto">?</button>'+
       '</div>'+
-      '<div class="pitch-row"><div class="pitch-grid">'+pitchBtns+'</div></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;">'+pitchBtns+'</div>'+
     '</div>'+
 
     // ── セクション②③ 打席結果 + 走者イベント（アコーディオン版） ──
@@ -3460,7 +3630,6 @@ function renderInputTab(){
       // ヘッダー行
       '<div style="background:#f0f4f8;padding:4px 10px;font-size:11px;color:#555;display:flex;align-items:center;gap:6px;border-bottom:1px solid #e8eaed;">'+
         '<span style="font-weight:bold;color:#1a3a6e;font-size:12px">② 打球の結果</span>'+
-        '<span style="font-size:14px;color:'+(S.resultTab?'#555':'#1565c0')+';font-weight:bold;transition:transform .2s;display:inline-block;transform:'+(S.resultTab?'rotate(180deg)':'rotate(0deg)')+'">▼</span>'+
         '<button class="help-btn" id="helpResultBtn" style="margin-left:auto">?</button>'+
       '</div>'+
       // タブ（常に表示・押すと展開）
@@ -3570,18 +3739,15 @@ function renderInputTab(){
       '<button class="runner-btn" style="background:#1565c0" data-change="runner"><span class="rlabel">代走</span></button>'+
     '</div>'+
 
-    // ── 空欄にして次へ ──
-    (skipBtn?'<div style="padding:2px 0 4px">'+skipBtn+'</div>':"")+
-
-    // ── 取消・チェンジ ──
+    // ── 取消・チェンジ（アクションバー） ──
     '<div style="display:flex;gap:5px;padding-bottom:2px;">'+
       '<button class="undo-btn" style="flex:1;margin:0;display:flex;flex-direction:column;align-items:center;gap:1px;"'+undoDisabled+(undoDisabled?' aria-disabled="true"':'')+' id="undoBtn">'+
         '<span style="font-size:13px;font-weight:bold;">↩ 取り消す'+undoCount+'</span>'+
         '<span style="font-size:11px;opacity:.7">'+(S.history.length>0?"直前の打席に戻る":"履歴なし")+'</span>'+
       '</button>'+
-      '<button id="changeBtn" style="flex:1;background:'+(S.outs>=3?"#c62828":"#455a64")+';color:#fff;border:none;border-radius:9px;padding:8px 4px;font-size:13px;font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;'+(S.outs>=3?"box-shadow:0 0 0 2px #ff8a80;":"")+'">'+
+      '<button id="changeBtn" style="flex:1;background:'+(S.outs>=3?"#c62828":"#455a64")+';color:#fff;border:none;border-radius:9px;padding:8px 4px;font-size:13px;font-weight:bold;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;'+(S.outs>=3?"box-shadow:0 0 0 2px #ff8a80;animation:pulse .8s infinite;":"")+'">'+
         '<span>'+(S.outs>=3?"✅ チェンジ！":"⇄ チェンジ")+'</span>'+
-        '<span style="font-size:11px;opacity:.85">'+(S.outs>=3?"3アウト！攻守交代してください":"3アウトになったら押す")+'</span>'+
+        '<span style="font-size:11px;opacity:.85">'+(S.outs>=3?"3アウト！攻守交代":"攻守交代するとき押す")+'</span>'+
       '</button>'+
     '</div>'+
 
@@ -3615,13 +3781,9 @@ function renderDefWizPanel(wiz){
   var sec6done=sel.outcome!==undefined;
   var sec7done=sel.runnerOutBase!==undefined;
 
-  var canSubmit;
-  if(isHit) canSubmit=true;
-  else if(isEType) canSubmit=sec1done; // E: errorWho=section1
-  else if(needsFcOut) canSubmit=sec1done&&sec2done&&sec7done;
-  else if(needsOutcome&&sel.hasError===true) canSubmit=sec1done&&sec5done&&sec6done;
-  else if(needsOutcome) canSubmit=sec1done&&sec4done; // エラーなし確定後
-  else canSubmit=sec1done;
+  // 全詳細はオプション: 急いでいる場合は何も選ばずすぐ記録可能
+  // 詳細を入力するほどスコアブックが充実する設計
+  var canSubmit=true;
 
   var stepNums=["①","②","③","④","⑤","⑥","⑦"];
   var si=0;
@@ -3712,9 +3874,10 @@ function renderDefWizPanel(wiz){
     } else {
       var excl3=[s1val,sel.throwTo].filter(function(v){return v!=null;});
       html+='<div class="wiz-section wiz-active">';
-      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>2投目の送球先（2ndアウト）</div>';
+      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>2人目はどこでアウトにしましたか？</div>';
+      html+='<div style="font-size:11px;color:#64748b;margin-bottom:6px">2投目の送球先（2ndアウト）</div>';
       html+=posGrid("throwTo2",false,excl3);
-      html+='<button class="choice-btn light" style="width:100%;padding:9px;font-size:12px;margin-top:4px" data-wiz-skip="throw_to2">2投目なし</button>';
+      html+='<button class="choice-btn light" style="width:100%;padding:9px;font-size:12px;margin-top:4px" data-wiz-skip="throw_to2">2投目なし（自分でタッチ）</button>';
       html+='</div>';
     }
   }
@@ -3725,10 +3888,11 @@ function renderDefWizPanel(wiz){
       html+=doneSec(stepNums[si++],"エラーは？",sel.hasError?"エラーあり":"エラーなし","hasError",sel.hasError);
     } else {
       html+='<div class="wiz-section wiz-active">';
-      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>エラー（ミス）はありましたか？</div>';
+      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>守備ミス（エラー）はありましたか？</div>';
+      html+='<div style="font-size:11px;color:#64748b;margin-bottom:7px">捕球ミス・送球ミス・落球などがあった場合は「あり」</div>';
       html+='<div class="choice-grid">';
-      html+='<button class="choice-btn" style="background:#f0fdf4;border:2px solid #16a34a;color:#14532d;font-weight:bold" data-wiz-error="no">✓ エラーなし<br><span style="font-size:11px;opacity:.8">正常なプレー</span></button>';
-      html+='<button class="choice-btn" style="background:#fff5f5;border:2px solid #c62828;color:#7f1d1d;font-weight:bold" data-wiz-error="yes">⚠ エラーあり<br><span style="font-size:11px;opacity:.8">捕球・送球ミス等</span></button>';
+      html+='<button class="choice-btn" style="background:#f0fdf4;border:2px solid #16a34a;color:#14532d;font-weight:bold;padding:13px 8px" data-wiz-error="no">✓ ミスなし<br><span style="font-size:11px;opacity:.8">正常なプレー</span></button>';
+      html+='<button class="choice-btn" style="background:#fff5f5;border:2px solid #c62828;color:#7f1d1d;font-weight:bold;padding:13px 8px" data-wiz-error="yes">⚠ ミスあり<br><span style="font-size:11px;opacity:.8">捕球・送球ミス等</span></button>';
       html+='</div></div>';
     }
   }
@@ -3739,7 +3903,8 @@ function renderDefWizPanel(wiz){
       html+=doneSec(stepNums[si++],"エラーした選手",sel.errorWho+' '+POSITIONS[sel.errorWho],"errorWho",true);
     } else {
       html+='<div class="wiz-section wiz-active">';
-      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>エラーをした選手は？</div>';
+      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>ミスをした選手は誰ですか？</div>';
+      html+='<div style="font-size:11px;color:#64748b;margin-bottom:6px">落球・暴投した選手を選んでください</div>';
       html+=posGrid("errorWho",true,[]);
       html+='</div>';
     }
@@ -3751,16 +3916,17 @@ function renderDefWizPanel(wiz){
       html+=doneSec(stepNums[si++],"打者の結果",sel.outcome==="out"?"アウト":"出塁（エラー）","outcome",sel.outcome==="out");
     } else {
       html+='<div class="wiz-section wiz-active">';
-      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>打者は最終的にどうなりましたか？</div>';
+      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>打者はアウトになりましたか？</div>';
+      html+='<div style="font-size:11px;color:#64748b;margin-bottom:7px">ミスがあっても打者がアウトになることがあります</div>';
       html+='<div class="choice-grid">';
-      html+='<button class="choice-btn" style="background:#fff5f5;border:2px solid #c62828;color:#7f1d1d;font-weight:bold" data-wiz-outcome="out">✕ アウト<br><span style="font-size:11px;opacity:.8">打者もアウト</span></button>';
-      html+='<button class="choice-btn" style="background:#f0fdf4;border:2px solid #16a34a;color:#14532d;font-weight:bold" data-wiz-outcome="reach">✓ 出塁（エラー）<br><span style="font-size:11px;opacity:.8">打者が塁に出た</span></button>';
+      html+='<button class="choice-btn" style="background:#fff5f5;border:2px solid #c62828;color:#7f1d1d;font-weight:bold;padding:13px 8px" data-wiz-outcome="out">✕ アウトになった<br><span style="font-size:11px;opacity:.8">打者もアウト</span></button>';
+      html+='<button class="choice-btn" style="background:#f0fdf4;border:2px solid #16a34a;color:#14532d;font-weight:bold;padding:13px 8px" data-wiz-outcome="reach">✓ 塁に出た（エラー出塁）<br><span style="font-size:11px;opacity:.8">打者が1塁などに残った</span></button>';
       html+='</div></div>';
     }
   }
 
   // ── Section 7: FC 走者アウト ──
-  if(needsFcOut&&sec2done){
+  if(needsFcOut&&sec2done&&S.curBases.filter(function(b){return b>=1&&b<=3;}).length>0){
     var fcBases=S.curBases.filter(function(b){return b>=1&&b<=3;});
     var fcL={1:"一塁走者",2:"二塁走者",3:"三塁走者"};
     if(sec7done){
@@ -3768,27 +3934,42 @@ function renderDefWizPanel(wiz){
       html+=doneSec(stepNums[si++],"アウトになった走者",s7chip,"runnerOutBase",sel.runnerOutBase!==null);
     } else {
       html+='<div class="wiz-section wiz-active">';
-      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>誰がアウトになりましたか？</div>';
+      html+='<div class="wiz-section-hdr"><span class="wiz-num">'+stepNums[si++]+'</span>野手が狙った走者は誰ですか？</div>';
+      html+='<div style="font-size:11px;color:#64748b;margin-bottom:7px">打者が1塁に向かう間、守備が別の走者をアウトにしようとした走者</div>';
       html+='<div style="display:grid;grid-template-columns:1fr;gap:7px;margin-bottom:6px">';
       fcBases.forEach(function(b){
-        html+='<button class="choice-btn" style="background:#fff5f5;border:2px solid #c62828;color:#7f1d1d;font-weight:bold;padding:10px" data-wiz-fc-out="'+b+'">'+fcL[b]+'がアウト</button>';
+        html+='<button class="choice-btn" style="background:#fff5f5;border:2px solid #c62828;color:#7f1d1d;font-weight:bold;padding:10px" data-wiz-fc-out="'+b+'">'+fcL[b]+'をアウトにした（しようとした）</button>';
       });
       html+='</div>';
-      html+='<button class="choice-btn" style="background:#f0fdf4;border:2px solid #16a34a;color:#14532d;font-weight:bold;padding:10px" data-wiz-fc-out="none">誰もアウトにならなかった</button>';
+      html+='<button class="choice-btn" style="background:#f0fdf4;border:2px solid #16a34a;color:#14532d;font-weight:bold;padding:10px" data-wiz-fc-out="none">走者へのプレーなし / 不明</button>';
       html+='</div>';
     }
   }
 
   // ── 記録ボタン ──
-  var readyLbl=canSubmit?'✅ 記録する':'↑ 必要な項目を選んでください';
+  // 詳細の入力状況に応じてラベルを変える（常に押せる）
+  var filledCount=[sec1done,sec2done&&needsThrow,sec3done&&needsThrow2,sec4done&&needsErrorAsk].filter(Boolean).length;
+  var recordLbl=isHit?'✅ 記録する':(filledCount>0?'✅ 記録する（詳細あり）':'⚡ 今すぐ記録する（詳細なし）');
   html+='<div style="margin-top:14px;padding-top:10px;border-top:2px solid #e2e8f0;">';
-  html+='<button class="confirm-btn" id="wizConfirmBtn"'+(canSubmit?'':' disabled style="opacity:.38;cursor:not-allowed;"')+'>'+readyLbl+'</button>';
+  html+='<button class="confirm-btn" id="wizConfirmBtn">'+recordLbl+'</button>';
+  if(!isHit&&filledCount===0){
+    html+='<div style="font-size:11px;color:#64748b;text-align:center;margin-top:5px">詳細を入力しなくてもOK。後から「後で入力」で追記できます</div>';
+  }
   html+='<button class="modal-cancel" id="defWizCancelBtn" style="margin-top:6px">'+(isHit?"スキップして記録する":"キャンセル")+'</button>';
   html+='</div>';
 
+  var titleMap={
+    GO:"ゴロ — 守備を記録",SAC:"送りバント — 守備を記録",SQ:"スクイズ — 守備を記録",
+    FO:"フライアウト — 守備を記録",LO:"ライナーアウト — 守備を記録",IFF:"内野フライ — 守備を記録",
+    DP:"ゲッツー — 守備を記録",SF:"犠牲フライ — 守備を記録",
+    E:"エラー — どの選手？",FC:"野選（フィルダースチョイス）— 守備を記録",
+    "1H":"ヒット — 守備方向（任意）","2H":"二塁打 — 守備方向（任意）","3H":"三塁打 — 守備方向（任意）",BH:"バントヒット — 守備方向（任意）",
+    GO_E:"ゴロエラー — 守備を記録",SACE:"バントエラー — 守備を記録"
+  };
+  var modalTitle=titleMap[ht]||(isHit?"打球方向（任意）":"守備詳細");
   return'<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true">'+
     '<div class="modal-sheet">'+
-    '<div class="modal-title" style="margin-bottom:6px">⚾ '+(isHit?"打球方向（任意）":"守備詳細")+'</div>'+
+    '<div class="modal-title" style="margin-bottom:6px;font-size:15px">⚾ '+modalTitle+'</div>'+
     html+'</div></div>';
 }
 
@@ -3986,12 +4167,27 @@ function renderModal(){
     return'<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true"><div class="modal-sheet" style="max-height:88vh;overflow-y:auto;">'+
       // プログレス
       '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">'+progressHtml+'</div>'+
-      // ヘッダー（打席結果と走者名）
-      '<div style="background:#f0f4f8;border-radius:12px;padding:12px 14px;margin-bottom:10px;">'+
-        '<div style="font-size:11px;color:#888;margin-bottom:4px">打席結果：<strong style="color:#1a3a6e">'+rm.sym.sym+'</strong></div>'+
-        '<div style="font-size:17px;font-weight:bold;color:#1a3a6e">'+bName+'はどうなった？</div>'+
-        (base===0?'<div style="font-size:12px;color:#1565c0;margin-top:5px;line-height:1.5">通常は「1塁に止まった」を選べばOK</div>':'')+
-      '</div>'+
+      // ヘッダー（打席結果と走者名・状況コンテキスト）
+      (function(){
+        var inn3Num=S.curInning+1;
+        var sideStr=S.curSide==="top"?"先攻":"後攻";
+        var outStr=S.outs+"アウト";
+        var awayS=totalScore("top"),homeS=totalScore("bottom");
+        var scoreStr=S.awayTeam.name.slice(0,4)+" "+awayS+" - "+homeS+" "+S.homeTeam.name.slice(0,4);
+        var runnerCount=S.curBases.filter(function(b){return b>=1&&b<=3;}).length;
+        var chanceTxt=runnerCount>0?("走者"+runnerCount+"人"):"";
+        return'<div style="background:#f0f4f8;border-radius:12px;padding:12px 14px;margin-bottom:10px;">'+
+          '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">'+
+            '<span style="background:#1a3a6e;color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:bold">'+inn3Num+'回 '+sideStr+'</span>'+
+            '<span style="background:#455a64;color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:bold">'+outStr+'</span>'+
+            (chanceTxt?'<span style="background:#2e7d32;color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:bold">'+chanceTxt+'</span>':'')+
+            '<span style="background:#fff;color:#555;font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid #ccc">'+scoreStr+'</span>'+
+          '</div>'+
+          '<div style="font-size:11px;color:#888;margin-bottom:4px">打席結果：<strong style="color:#1a3a6e">'+rm.sym.sym+'</strong>　<span style="color:#555">'+rm.sym.desc+'</span></div>'+
+          '<div style="font-size:17px;font-weight:bold;color:#1a3a6e">'+bName+'はどうなった？</div>'+
+          (base===0?'<div style="font-size:12px;color:#1565c0;margin-top:5px;line-height:1.5">通常は「1塁に止まった」を選べばOK</div>':'')+
+        '</div>';
+      })()+
       // ヒント
       (hint?'<div style="background:#e8f5e9;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13px;color:#2e7d32;line-height:1.5;font-weight:bold">💡 '+hint+'</div>':"")+
       remNote+backBtn2+
@@ -5084,6 +5280,41 @@ function renderModal(){
     '</div></div>';
   }
 
+  // ── 試合履歴 ──
+  if(type==="season_history"){
+    var list_sh=[];
+    try{ list_sh=JSON.parse(localStorage.getItem(SEASON_KEY)||"[]")||[]; }catch(e){ list_sh=[]; }
+    if(!Array.isArray(list_sh)) list_sh=[];
+    var rows_sh=list_sh.length===0
+      ? '<div style="text-align:center;color:#bbb;padding:24px 0;font-size:14px">記録がまだありません</div>'
+      : list_sh.map(function(g,gi){
+          var resultColor=g.result==="win"?"#c62828":g.result==="lose"?"#1565c0":"#555";
+          var resultLabel=g.result==="win"?"勝":g.result==="lose"?"負":"分";
+          var metaLine=[g.date, g.tournament, g.venue].filter(Boolean).join(" · ");
+          return'<div style="background:#f8f9fa;border-radius:10px;padding:10px 12px;margin-bottom:8px;">'+
+            (metaLine?'<div style="font-size:11px;color:#888;margin-bottom:4px">'+metaLine+'</div>':'')+
+            '<div style="display:flex;align-items:center;gap:8px;">'+
+              '<span style="background:'+resultColor+';color:#fff;border-radius:6px;padding:2px 8px;font-size:13px;font-weight:bold;flex-shrink:0">'+resultLabel+'</span>'+
+              '<span style="font-size:13px;font-weight:bold;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+
+                g.away+' <span style="color:'+resultColor+';font-size:16px">'+g.awayScore+' - '+g.homeScore+'</span> '+g.home+
+              '</span>'+
+              '<span style="font-size:11px;color:#aaa;flex-shrink:0">'+g.innings+'回</span>'+
+            '</div>'+
+            '<button class="sh-delete-btn" data-shidx="'+gi+'" style="margin-top:6px;background:none;border:none;color:#ccc;font-size:11px;cursor:pointer;padding:0;">削除</button>'+
+          '</div>';
+        }).join("");
+    var clearBtn=list_sh.length>0
+      ? '<button id="shClearAllBtn" style="width:100%;background:#ffebee;color:#c62828;border:1px solid #ef9a9a;border-radius:8px;padding:9px;font-size:12px;font-weight:bold;cursor:pointer;margin-bottom:8px">すべて削除</button>'
+      : '';
+    return'<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true"><div class="modal-sheet">'+
+      '<div class="modal-title">📋 試合履歴</div>'+
+      '<div style="font-size:12px;color:#888;margin-bottom:10px">「試合終了」ボタンを押した試合が自動保存されます（最大50件）</div>'+
+      '<div style="max-height:55vh;overflow-y:auto;margin-bottom:8px;">'+rows_sh+'</div>'+
+      clearBtn+
+      '<button class="modal-cancel" id="closeModalBtn">閉じる</button>'+
+    '</div></div>';
+  }
+
   return"";
 }
 
@@ -5142,49 +5373,50 @@ function buildWriteGuide(ab){
 
 // スコア記録Tips（スコアタブ内に格納）
 var SCOREBOOK_TIPS=[
+  // ─── 基本操作 ───
+  {cat:"基本操作",q:"急いでいるときは？",a:"投球・守備の詳細は全て任意です。②のタブからアウト/ヒット/出塁を選ぶだけでも記録できます。「後で入力」ボタンで打席を後回しにすることもできます"},
+  {cat:"基本操作",q:"間違えたときは？",a:"画面下の「↩ 取り消す」ボタンで直前の打席に戻れます。スコアブックタブの打席カードをタップして修正することもできます"},
+  {cat:"基本操作",q:"後で入力ってどういう意味？",a:"「後で入力」ボタンを押すと、その打席を空欄にして次の打者へ進めます。後からスコアブックタブで空欄をタップして記録できます。急いでいるときに便利です"},
   // ─── 投球・カウント ───
-  {q:"投球の記録方法",a:"①のボタンを押して投球を記録します。B=ボール、S=見逃しストライク、SW=空振り、F=ファウル、死=デッドボール。4ボールで四球、ストライク3つで三振と自動判定します"},
-  {q:"見逃し三振 vs 空振り三振",a:"見逃し三振（K）はバットを振らずストライク3つ、ダイヤモンド右下に「K」と小さい◯が表示されます。空振り三振（SK）はバットを振ってストライク3つ、「K」だけが表示されます"},
-  {q:"振り逃げ三振",a:"空振り三振後に捕手がボールを落とすと振り逃げです。打者は1塁へ向かえます。ダイヤモンド右下に左右反転した「Ꝃ」が表示されます"},
-  {q:"バント三振",a:"3球でバント失敗した場合は特殊な「K◆」記号が表示されます"},
-  {q:"三振した",a:"①でB・S・SWを入力すると自動で「K（見逃し）」または「SK（空振り）」が記録されます。3球目で自動表示されます"},
-  {q:"フォアボール（四球）",a:"①でボールを4つ入力すると自動で記録。打者は1塁へ進みます"},
-  {q:"死球（体にボールが当たった）",a:"①の「死」ボタンを押すと自動記録。打者は1塁へ進みます"},
+  {cat:"投球・カウント",q:"投球の記録方法",a:"①のボタンを押して投球を記録します。B=ボール、S=見逃しストライク、SW=空振り、F=ファウル。4ボールで四球、ストライク3つで三振と自動判定します"},
+  {cat:"投球・カウント",q:"見逃し三振 vs 空振り三振",a:"見逃し三振（K）はバットを振らずストライク3つ。空振り三振（SK）はバットを振ってストライク3つ。どちらもダイヤモンド右下に「K」が表示されます"},
+  {cat:"投球・カウント",q:"振り逃げ三振",a:"空振り三振後に捕手がボールを落とすと振り逃げです。打者は1塁へ向かえます。投球入力後に自動で聞かれます"},
+  {cat:"投球・カウント",q:"3バント三振（K3B）",a:"2ストライクの状態でバントがファウルになると三振です。投球にFを入力後、黄色いヒントが出るので「✕アウト」→「3バント三振」を選んでください"},
+  {cat:"投球・カウント",q:"フォアボール（四球）",a:"①でボールを4つ入力すると自動で記録。打者は1塁へ進みます"},
+  {cat:"投球・カウント",q:"死球（体にボールが当たった）",a:"HBPボタン（投球ボタンの下）を押すと自動記録。打者は1塁へ進みます"},
   // ─── アウト ───
-  {q:"ゴロでアウト",a:"②アウトタブ→「ゴロ」を選びます。どの選手が取ったか入力します（例：三塁手5番→一塁手3番へ送球 = 5∪3）"},
-  {q:"フライでアウト",a:"②アウトタブ→「フライ」を選びます。外野手（7左翼・8中堅・9右翼）か内野手かを選びます"},
-  {q:"ゲッツー（一度に2人アウト）",a:"②アウトタブ→「ゲッツー」を選びます。1塁に走者がいて0〜1アウトのときに起こります"},
-  {q:"送りバント（犠打）",a:"②アウトタブ→「送りバント」を選びます。打者はアウトになりますが走者が1つ進みます"},
-  {q:"スクイズ",a:"②アウトタブ→「スクイズ」を選びます（3塁に走者がいるときのみ）。バントで3塁走者がホームインします"},
-  {q:"スクイズ失敗",a:"②アウトタブ→「スクイズ失敗」を選びます。バント空振りで三振し、3塁走者もアウトになります（同時に2アウト）"},
-  {q:"犠牲フライ",a:"②アウトタブ→「犠牲フライ」を選びます（3塁に走者がいるときのみ）。フライが捕られても3塁走者がホームインします"},
-  {q:"内野フライ（インフィールドフライ）",a:"②アウトタブ→「内野フライ」を選びます。1・2塁に走者がいるとき審判が宣告する特別ルール。自動的にアウトになり走者は動けません"},
-  {q:"バントエラー",a:"バントしたがエラーになった場合、ダイヤモンドに守備番号+「E」が表示されます"},
+  {cat:"アウトの記録",q:"ゴロでアウト",a:"②アウトタブ→「ゴロ」を選びます。どの選手が取ったか入力します（例：三塁手5番→一塁手3番へ送球 = 5∪3）"},
+  {cat:"アウトの記録",q:"フライでアウト",a:"②アウトタブ→「フライ」を選びます。外野手（7左翼・8中堅・9右翼）か内野手かを選びます"},
+  {cat:"アウトの記録",q:"ゲッツー（一度に2人アウト）",a:"②アウトタブ→「ゲッツー」を選びます。1塁に走者がいて0〜1アウトのときに起こります"},
+  {cat:"アウトの記録",q:"送りバント（犠打）",a:"②アウトタブ→「送りバント」を選びます。打者はアウトになりますが走者が1つ進みます"},
+  {cat:"アウトの記録",q:"スクイズ",a:"②アウトタブ→「スクイズ」を選びます（3塁に走者がいるときのみ）。バントで3塁走者がホームインします"},
+  {cat:"アウトの記録",q:"犠牲フライ",a:"②アウトタブ→「犠牲フライ」を選びます（3塁に走者がいるときのみ）。フライが捕られても3塁走者がホームインします"},
+  {cat:"アウトの記録",q:"内野フライ（インフィールドフライ）",a:"②アウトタブ→「内野フライ」を選びます。1・2塁に走者がいるとき審判が宣告する特別ルール。自動的にアウトになり走者は動けません"},
   // ─── ヒット・出塁 ───
-  {q:"ヒットを打った",a:"②ヒットタブ→「ヒット」「二塁打」「三塁打」「ホームラン」から選びます。守備ウィザードでどこへ飛んだかを入力します"},
-  {q:"バントヒット",a:"②ヒットタブ→「バントヒット」を選びます。バントしたが守備が間に合わず出塁した場合です"},
-  {q:"エラーで出塁した",a:"②エラー等タブ→「エラーで出塁」を選びます。守備ミスがなければアウトでした。この走者が得点しても投手の成績には影響しません"},
-  {q:"野選で出塁（守備が他の走者を狙った）",a:"②エラー等タブ→「野選で出塁」を選びます。守備が打者ではなく別の走者をアウトにしようとしたため打者が出塁した場合です"},
-  {q:"振り逃げ",a:"空振り三振後に捕手がボールを逸らしたら振り逃げです。投球入力後に「振り逃げか？」と自動で聞かれます"},
+  {cat:"ヒット・出塁",q:"ヒットを打った",a:"②ヒットタブ→「ヒット」「二塁打」「三塁打」「ホームラン」から選びます。守備ウィザードでどこへ飛んだかを入力できます（任意）"},
+  {cat:"ヒット・出塁",q:"バントヒット",a:"②ヒットタブ→「バントヒット」を選びます。バントしたが守備が間に合わず出塁した場合です"},
+  {cat:"ヒット・出塁",q:"エラーで出塁した",a:"②出塁タブ→「エラーで出塁」を選びます。守備ミスがなければアウトでした。この走者が得点しても投手の自責点になりません"},
+  {cat:"ヒット・出塁",q:"野選で出塁（守備が他の走者を狙った）",a:"②出塁タブ→「野選で出塁」を選びます。守備が打者ではなく別の走者をアウトにしようとしたため打者が出塁した場合です"},
+  {cat:"ヒット・出塁",q:"振り逃げ",a:"空振り三振後に捕手がボールを逸らしたら振り逃げです。投球入力後に「振り逃げか？」と自動で聞かれます"},
   // ─── 走者イベント ───
-  {q:"盗塁が起きた",a:"③走者イベント→「盗塁」を押します。走者が1人なら即記録。2人いる場合は誰が走ったかを選びます。ダイヤモンド走塁線に「S」と投球ティック（何球目かを示す「'」マーク）が表示されます"},
-  {q:"投球ティック（投球紐付け）",a:"盗塁、暴投、捕逸などのイベントは何球目に起きたかを走塁線の脇に「'」で表示します。例えば3球目なら「'''」と3つ表示されます"},
-  {q:"暴投（投球が大きく逸れた）",a:"③走者イベント→「暴投」を押します。走者が何塁進んだかを確認して記録します。ダイヤモンドに「WP」と投球ティックが表示されます"},
-  {q:"捕逸（捕手が後ろに逸らした）",a:"③走者イベント→「捕逸」を押します。暴投と同様に走者が進みます。ダイヤモンドに「PB」と投球ティックが表示されます"},
-  {q:"ボーク（投手の反則動作）",a:"③走者イベント→「ボーク」を押します。全走者が1つ進みます。ダイヤモンドに「BK」と投球ティックが表示されます"},
-  {q:"牽制でアウト",a:"③走者イベント→「牽制アウト」を押します。元の打者のダイヤモンドに後から✕マークが記録されます"},
-  {q:"走者が挟まれてアウト（ランダウン）",a:"③走者イベント→「挟殺」を押します"},
+  {cat:"走者イベント",q:"盗塁が起きた",a:"③走者イベント→「盗塁」を押します。走者が1人なら即記録。2人いる場合は誰が走ったかを選びます"},
+  {cat:"走者イベント",q:"盗塁失敗（CS）",a:"③走者イベント→「盗塁失敗」を押します。走者がアウトになります。統計タブでCS（盗塁死）が集計されます"},
+  {cat:"走者イベント",q:"暴投（WP）・捕逸（PB）",a:"③走者イベント→「暴投」または「捕逸」を押します。走者が何塁進んだかを確認して記録します"},
+  {cat:"走者イベント",q:"ボーク（投手の反則動作）",a:"③走者イベント→「ボーク」を押します。全走者が1つ進みます"},
+  {cat:"走者イベント",q:"牽制でアウト・挟殺",a:"③走者イベント→「牽制アウト」または「挟殺」を押します。元の打者のダイヤモンドに✕マークが記録されます"},
   // ─── 得点・残塁 ───
-  {q:"得点が記録された",a:"走者がホームインするとダイヤモンドの中央に赤い◯が表示されます。その走者の元の打席左下には「生還に貢献した打者の打順」が赤い数字で表示されます"},
-  {q:"残塁（塁に残った走者）",a:"チェンジ時に塁に残った走者の元の打席ダイヤモンド中央に「ℓ」という記号が表示されます。これは得点でもアウトでもなく、攻撃交代時に塁に残った走者を示します"},
-  // ─── 投手・記録管理 ───
-  {q:"投手が交代した",a:"③走者エリアの「投手交代」ボタンを押して新投手の名前と番号を入力します。投手交代が起きた打席のダイヤモンド左側に縦線と「P」が表示され、何球目で交代したかが「○球」で記録されます"},
-  {q:"投手交代と投球ティック",a:"投手交代が中盤に起きた場合、ダイヤモンド左側に交代時の投球数が表示されます（例：「5球」）。これにより正確な交代タイミングが記録されます"},
-  {q:"得点が記録されていない",a:"③走者イベント→「得点追加」で手動で追加できます"},
-  {q:"入力を間違えた",a:"画面下の「取り消す」ボタンで直前の打席に戻れます"},
-  {q:"自責点って何？",a:"守備ミス（エラー）がなければ入らなかった可能性がある点は「非自責点」として投手の成績に含まれません。アプリが自動で判断します"},
-  {q:"タイムリーって何？",a:"走者がいるときにヒットを打って走者がホームインした打撃のことです。打点が記録されます"},
-  {q:"守備番号がわからない",a:"1=投手 2=捕手 3=一塁手 4=二塁手 5=三塁手 6=遊撃手（ショート） 7=左翼手 8=中堅手 9=右翼手"}
+  {cat:"得点・残塁",q:"得点が記録された",a:"走者がホームインするとダイヤモンドの中央に赤い◯が表示されます。走者の元の打席左下には生還番号が赤字で表示されます"},
+  {cat:"得点・残塁",q:"残塁（塁に残った走者）",a:"チェンジ時に塁に残った走者の元の打席に「ℓ」が表示されます。得点でもアウトでもない、攻撃交代時に残った走者です"},
+  {cat:"得点・残塁",q:"得点が記録されていない",a:"③走者イベント→「得点追加」で手動で追加できます"},
+  // ─── 投手・選手交代 ───
+  {cat:"投手・選手交代",q:"投手が交代した",a:"③の「投手交代」ボタンを押して新投手の名前と番号を入力します。打席のダイヤモンド左側に縦線と何球目で交代したかが記録されます"},
+  {cat:"投手・選手交代",q:"代打・代走を記録したい",a:"③の「代打」または「代走」ボタンを押します。選手名と番号を入力すると打順スロットが新選手に切り替わります"},
+  {cat:"投手・選手交代",q:"自責点って何？",a:"守備ミス（エラー）がなければ入らなかった点は「非自責点」として投手の成績に含まれません。アプリが自動で判断します"},
+  // ─── 統計・記録 ───
+  {cat:"統計・記録",q:"得点圏打率（RISP）って何？",a:"2塁または3塁に走者がいるときの打率のことです。統計タブの「得圏打率」列に表示されます。チャンスに強いかどうかが分かります"},
+  {cat:"統計・記録",q:"OPSって何？",a:"出塁率＋長打率の合計で打者の総合得点力を表す指標です。1.000以上は超一流、0.850以上は優秀、0.700以上は平均的です"},
+  {cat:"統計・記録",q:"タイムリーって何？",a:"走者がいるときにヒットを打って走者がホームインした打撃のことです。打点（RBI）が記録されます"},
+  {cat:"統計・記録",q:"守備番号がわからない",a:"1=投手 2=捕手 3=一塁手 4=二塁手 5=三塁手 6=遊撃手（ショート） 7=左翼手 8=中堅手 9=右翼手"}
 ];
 function renderScorebook(){
   // サブタブ（スコア一覧 / Tips）
@@ -5353,8 +5585,8 @@ function calcPlayerStats(side){
   function get(order,name,num){
     if(!map[order])map[order]={order:order,name:name,num:num,
       pa:0,ab:0,h:0,single:0,double:0,triple:0,hr:0,
-      bb:0,hbp:0,k:0,sac:0,sf:0,rbi:0,r:0,sb:0,
-      ibb:0};
+      bb:0,hbp:0,k:0,sac:0,sf:0,rbi:0,r:0,sb:0,cs:0,
+      ibb:0,ruspAb:0,ruspH:0};
     return map[order];
   }
   (S.game[side]||[]).forEach(function(inn){
@@ -5381,10 +5613,14 @@ function calcPlayerStats(side){
       if(HR_CODES.includes(rc)) st.r++;
       // R: 走者として後から生還（scoredByBatterOrder が設定されている打席）
       if(ab.scoredByBatterOrder) st.r++;
-      // 盗塁: 打席中の走者イベント
+      // 盗塁/盗塁失敗: 打席中の走者イベント
       (ab.runnerEvents||[]).forEach(function(ev){
-        if(ev.type==="SB"||ev.code==="SB") st.sb++;
+        var c=ev.type||ev.code;
+        if(c==="SB") st.sb++;
+        if(c==="CS") st.cs++;
       });
+      // RISP (得点圏打率)
+      if(ab.ruspAtBat&&!NO_AB_CODES.includes(rc)){st.ruspAb++;if(HIT_CODES.includes(rc))st.ruspH++;}
     });
     // 空欄スロット（filled済み）
     (inn.slots||[]).forEach(function(slot){
@@ -5407,6 +5643,8 @@ function calcPlayerStats(side){
       if((ab.isTimely||ab.isForcedIn)&&ab.timelyCount>0) st.rbi+=ab.timelyCount;
       if(HR_CODES.includes(rc)) st.r++;
       if(ab.scoredByBatterOrder) st.r++;
+      // RISP
+      if(ab.ruspAtBat&&!NO_AB_CODES.includes(rc)){st.ruspAb++;if(HIT_CODES.includes(rc))st.ruspH++;}
     });
   });
   // 指標計算
@@ -5419,20 +5657,22 @@ function calcPlayerStats(side){
     var tb = s.single + s.double*2 + s.triple*3 + s.hr*4;
     var slg = slg_denom>0 ? tb/slg_denom : NaN;
     var ops = (!isNaN(obp)&&!isNaN(slg)) ? obp+slg : NaN;
-    return Object.assign({},s,{avg:avg,obp:obp,slg:slg,ops:ops,tb:tb});
+    var rusp = s.ruspAb>0 ? s.ruspH/s.ruspAb : NaN;
+    return Object.assign({},s,{avg:avg,obp:obp,slg:slg,ops:ops,tb:tb,rusp:rusp});
   });
   // チーム集計行
   var tot={order:0,name:"チーム計",num:"",
     pa:0,ab:0,h:0,single:0,double:0,triple:0,hr:0,
-    bb:0,hbp:0,k:0,sac:0,sf:0,rbi:0,r:0,sb:0,tb:0};
+    bb:0,hbp:0,k:0,sac:0,sf:0,rbi:0,r:0,sb:0,cs:0,tb:0,ruspAb:0,ruspH:0};
   list.forEach(function(s){
-    ["pa","ab","h","single","double","triple","hr","bb","hbp","k","sac","sf","rbi","r","sb","tb"].forEach(function(f){tot[f]+=s[f]||0;});
+    ["pa","ab","h","single","double","triple","hr","bb","hbp","k","sac","sf","rbi","r","sb","cs","tb","ruspAb","ruspH"].forEach(function(f){tot[f]+=s[f]||0;});
   });
   var tot_obp_d=tot.ab+tot.bb+tot.hbp+tot.sf;
   tot.avg=tot.ab>0?tot.h/tot.ab:NaN;
   tot.obp=tot_obp_d>0?(tot.h+tot.bb+tot.hbp)/tot_obp_d:NaN;
   tot.slg=tot.ab>0?tot.tb/tot.ab:NaN;
   tot.ops=(!isNaN(tot.obp)&&!isNaN(tot.slg))?tot.obp+tot.slg:NaN;
+  tot.rusp=tot.ruspAb>0?tot.ruspH/tot.ruspAb:NaN;
   return {rows:list, total:tot};
 }
 
@@ -5495,8 +5735,8 @@ function renderBattingStats(){
 
     html+='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:520px;">';
     html+='<thead><tr style="background:#f5f7fa;">';
-    var heads=["#","選手","打席","打数","安打","二打","三打","本塁","打点","得点","四球","死球","三振","盗塁","打率","出塁率","長打率","OPS"];
-    var tips= ["","","PA","AB","H","2B","3B","HR","RBI","R","BB","HBP","K","SB","AVG","OBP","SLG","OPS"];
+    var heads=["#","選手","打席","打数","安打","二打","三打","本塁","打点","得点","四球","死球","三振","盗塁","盗死","打率","得圏打率","出塁率","長打率","OPS"];
+    var tips= ["","","PA","AB","H","2B","3B","HR","RBI","R","BB","HBP","K","SB","CS","AVG","RISP","OBP","SLG","OPS"];
     heads.forEach(function(h,i){
       html+='<th title="'+tips[i]+'" style="padding:5px 4px;text-align:center;white-space:nowrap;color:#555;font-size:11px;border-bottom:2px solid #e0e0e0;cursor:default;">'+h+'</th>';
     });
@@ -5524,7 +5764,9 @@ function renderBattingStats(){
         '<td style="text-align:center;padding:4px;">'+s.hbp+'</td>'+
         '<td style="text-align:center;padding:4px;color:'+(s.k>0?"#546e7a":"#333")+'">'+s.k+'</td>'+
         '<td style="text-align:center;padding:4px;">'+s.sb+'</td>'+
+        '<td style="text-align:center;padding:4px;color:'+(s.cs>0?"#c62828":"#333")+'">'+s.cs+'</td>'+
         '<td style="text-align:center;padding:4px;font-weight:bold;">'+fmt3(s.avg)+'</td>'+
+        '<td style="text-align:center;padding:4px;font-weight:bold;color:'+((!isNaN(s.rusp)&&s.rusp>=.300)?"#b71c1c":((!isNaN(s.rusp)&&s.rusp>=.200)?"#e65100":"#333"))+'">'+fmt3(s.rusp)+'</td>'+
         '<td style="text-align:center;padding:4px;font-weight:bold;">'+fmt3(s.obp)+'</td>'+
         '<td style="text-align:center;padding:4px;font-weight:bold;">'+fmt3(s.slg)+'</td>'+
         '<td style="text-align:center;padding:4px;font-weight:bold;color:'+opsColor+';">'+(!isNaN(s.ops)?s.ops.toFixed(3):"---")+'</td>'+
@@ -5552,7 +5794,9 @@ function renderBattingStats(){
       '<td style="text-align:center;padding:4px;">'+tot.hbp+'</td>'+
       '<td style="text-align:center;padding:4px;">'+tot.k+'</td>'+
       '<td style="text-align:center;padding:4px;">'+tot.sb+'</td>'+
+      '<td style="text-align:center;padding:4px;color:'+(tot.cs>0?"#c62828":"#333")+'">'+tot.cs+'</td>'+
       '<td style="text-align:center;padding:4px;">'+fmt3(tot.avg)+'</td>'+
+      '<td style="text-align:center;padding:4px;">'+fmt3(tot.rusp)+'</td>'+
       '<td style="text-align:center;padding:4px;">'+fmt3(tot.obp)+'</td>'+
       '<td style="text-align:center;padding:4px;">'+fmt3(tot.slg)+'</td>'+
       '<td style="text-align:center;padding:4px;color:'+totOpsColor+';">'+(!isNaN(tot.ops)?tot.ops.toFixed(3):"---")+'</td>'+
@@ -5562,7 +5806,8 @@ function renderBattingStats(){
 
     // 指標説明
     html+='<div style="padding:8px 12px;font-size:11px;color:#888;line-height:1.7;">'+
-      '打率(AVG)=安打÷打数　出塁率(OBP)=(安打+四球+死球)÷(打数+四球+死球+犠飛)　'+
+      '打率(AVG)=安打÷打数　得圏打率(RISP)=得点圏(2・3塁)での安打÷打数　'+
+      '出塁率(OBP)=(安打+四球+死球)÷(打数+四球+死球+犠飛)　'+
       '長打率(SLG)=塁打÷打数　OPS=出塁率+長打率'+
     '</div>';
     html+='</div>';
@@ -5598,6 +5843,20 @@ function renderScoreboard(){
     '<div style="font-size:10px;color:#888;margin-top:6px;padding:0 2px">💡 「自責点」＝守備ミスなしで入った点。投手の成績として記録されます</div>'+
   '</div>'+
   '<button id="copyScoreBtn" style="display:block;width:calc(100% - 20px);margin:8px 10px 4px;padding:10px;background:#fff;border:1.5px solid #1a3a6e;color:#1a3a6e;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer">📋 スコアをコピー</button>'+
+  (S.gameEnded
+    ? (function(){
+        var awayS=totalScore("top"), homeS=totalScore("bottom");
+        var resultLabel=awayS>homeS?"先攻チーム勝利":homeS>awayS?"後攻チーム勝利":"引き分け";
+        var resultColor=awayS>homeS?"#c62828":homeS>awayS?"#1565c0":"#555";
+        return'<div style="margin:0 10px 8px;background:'+resultColor+';color:#fff;border-radius:10px;padding:12px 16px;text-align:center;">'+
+          '<div style="font-size:11px;opacity:.85;margin-bottom:2px">試合終了</div>'+
+          '<div style="font-size:18px;font-weight:bold">'+resultLabel+'</div>'+
+          '<div style="font-size:20px;font-weight:bold;margin-top:4px">'+awayS+' - '+homeS+'</div>'+
+          '<button id="reopenGameBtn" style="margin-top:8px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:7px;padding:6px 16px;font-size:12px;cursor:pointer;">試合を再開する</button>'+
+        '</div>';
+      })()
+    : '<button id="endGameBtn" style="display:block;width:calc(100% - 20px);margin:0 10px 8px;padding:10px;background:#c62828;border:none;color:#fff;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer">🏁 試合終了</button>')+
+  '<button id="seasonHistoryBtn" style="display:block;width:calc(100% - 20px);margin:0 10px 8px;padding:9px;background:#fff;border:1.5px solid #546e7a;color:#546e7a;border-radius:10px;font-size:12px;font-weight:bold;cursor:pointer">📋 過去の試合履歴</button>'+
   '</div>';
 }
 
@@ -5787,18 +6046,29 @@ function calcPitcherIP(side, pitcherIdx){
 }
 
 function renderTips(){
+  var catColors={
+    "基本操作":"#e65100","投球・カウント":"#1565c0","アウトの記録":"#455a64",
+    "ヒット・出塁":"#2e7d32","走者イベント":"#1b5e20","得点・残塁":"#c62828",
+    "投手・選手交代":"#4527a0","統計・記録":"#00695c"
+  };
   var html='<div style="padding:10px 12px 80px;">';
   html+='<div style="font-size:15px;font-weight:bold;color:#1a3a6e;margin-bottom:4px">📝 スコア記録ガイド</div>';
-  html+='<div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.5">試合中にいつでも確認できます。初めての方はここを読んでください。</div>';
+  html+='<div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.5">試合中にいつでも確認できます。タップして回答を表示。</div>';
   var lastCat='';
   SCOREBOOK_TIPS.forEach(function(tip,i){
-    // カテゴリヘッダーを挿入（q末尾の区切り文字ではなくindexで判断）
-    html+='<details style="background:#fff;border-radius:10px;margin-bottom:6px;overflow:hidden;border:1px solid #e8eaed;" '+(i<3?'open':'')+'>';
-    html+='<summary style="background:#f0f4ff;padding:11px 14px;font-size:13px;font-weight:bold;color:#1a3a6e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;">'+
-      '<span>❓ '+tip.q+'</span>'+
-      '<span style="font-size:16px;color:#1565c0">＋</span>'+
+    var cat=tip.cat||'';
+    if(cat&&cat!==lastCat){
+      lastCat=cat;
+      var cc=catColors[cat]||'#1a3a6e';
+      html+='<div style="background:'+cc+';color:#fff;font-size:11px;font-weight:bold;padding:5px 12px;border-radius:8px;margin:10px 0 5px;letter-spacing:.5px;">'+cat+'</div>';
+    }
+    var isFirst=(cat==="基本操作"&&i<3);
+    html+='<details style="background:#fff;border-radius:9px;margin-bottom:5px;overflow:hidden;border:1px solid #e8eaed;" '+(isFirst?'open':'')+'>';
+    html+='<summary style="background:#f8f9fa;padding:10px 13px;font-size:12px;font-weight:bold;color:#333;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;">'+
+      '<span>Q. '+tip.q+'</span>'+
+      '<span style="font-size:14px;color:#1565c0;flex-shrink:0;margin-left:6px">▶</span>'+
     '</summary>';
-    html+='<div style="padding:10px 14px;font-size:13px;color:#333;line-height:1.8;border-top:1px solid #e8eaed;">→ '+tip.a+'</div>';
+    html+='<div style="padding:10px 13px;font-size:12px;color:#444;line-height:1.8;border-top:1px solid #e8eaed;background:#fafeff;">'+tip.a+'</div>';
     html+='</details>';
   });
   html+='</div>';
@@ -5982,8 +6252,44 @@ function bindEvents(){
         team.players[idx][fd]=fd==="position"?Number(e.target.value):e.target.value;
       }
     });
+    // イニング数選択
+    [5,6,7,9].forEach(function(n){
+      on("maxInn"+n,"click",function(){S.maxInnings=n;render();});
+    });
+    // コールドゲーム設定
+    on("tiebreakerToggle","click",function(){
+      if(!S.tiebreaker)S.tiebreaker={enabled:false};
+      S.tiebreaker.enabled=!S.tiebreaker.enabled;render();
+    });
+    on("coldGameToggle","click",function(){
+      if(!S.coldGame)S.coldGame={enabled:false,runs:10,fromInning:3};
+      S.coldGame.enabled=!S.coldGame.enabled;render();
+    });
+    (function(){
+      var cg=document.getElementById("coldRunsDiff");
+      if(cg)cg.addEventListener("change",function(e){if(!S.coldGame)S.coldGame={enabled:false,runs:10,fromInning:3};S.coldGame.runs=Number(e.target.value);});
+      var cf=document.getElementById("coldFromInn");
+      if(cf)cf.addEventListener("change",function(e){if(!S.coldGame)S.coldGame={enabled:false,runs:10,fromInning:3};S.coldGame.fromInning=Number(e.target.value);});
+    })();
+    // メタ情報入力
+    (function(){
+      var metaFields={metaDate:"date",metaTournament:"tournament",metaVenue:"venue",metaWeather:"weather"};
+      Object.keys(metaFields).forEach(function(id){
+        var el=document.getElementById(id);
+        if(!el)return;
+        el.addEventListener("input",function(e){if(!S.meta)S.meta={};S.meta[metaFields[id]]=e.target.value;});
+        el.addEventListener("change",function(e){if(!S.meta)S.meta={};S.meta[metaFields[id]]=e.target.value;});
+      });
+    })();
     // 試合開始
     on("startBtn","click",function(){
+      // メタ情報を最終確定
+      if(!S.meta)S.meta={};
+      ["metaDate","metaTournament","metaVenue","metaWeather"].forEach(function(id){
+        var el=document.getElementById(id);
+        var key={metaDate:"date",metaTournament:"tournament",metaVenue:"venue",metaWeather:"weather"}[id];
+        if(el)S.meta[key]=el.value;
+      });
       startGame(); render();
     });
     // データリセット
@@ -6346,6 +6652,37 @@ function bindEvents(){
       if(navigator.clipboard&&navigator.clipboard.writeText){
         navigator.clipboard.writeText(txt).then(function(){alert("コピーしました！");}).catch(function(){prompt("コピーしてください",txt);});
       } else {prompt("コピーしてください",txt);}
+    });
+    // 試合終了ボタン
+    on("endGameBtn","click",function(){
+      if(confirm("試合を終了しますか？\nスコアボードの記録はそのまま残ります。")){
+        S.gameEnded=true;
+        var awayS=totalScore("top"),homeS=totalScore("bottom");
+        S.gameResult=awayS>homeS?"win":homeS>awayS?"lose":"draw";
+        saveGameToSeason();
+        render();
+      }
+    });
+    on("reopenGameBtn","click",function(){
+      S.gameEnded=false;S.gameResult=null;render();
+    });
+    on("seasonHistoryBtn","click",function(){
+      S.modal={type:"season_history"};render();
+    });
+    on("shClearAllBtn","click",function(){
+      if(confirm("試合履歴をすべて削除しますか？")){
+        localStorage.removeItem(SEASON_KEY);
+        S.modal={type:"season_history"};render();
+      }
+    });
+    onAll(".sh-delete-btn","click",function(e){
+      var idx=parseInt(e.currentTarget.dataset.shidx,10);
+      var list_d=[];
+      try{ list_d=JSON.parse(localStorage.getItem(SEASON_KEY)||"[]")||[]; }catch(e2){ list_d=[]; }
+      if(!Array.isArray(list_d)) list_d=[];
+      list_d.splice(idx,1);
+      localStorage.setItem(SEASON_KEY, JSON.stringify(list_d));
+      S.modal={type:"season_history"};render();
     });
     // メンバー編集内チーム切替
     onAll("[data-edit-side]","click",function(e){
