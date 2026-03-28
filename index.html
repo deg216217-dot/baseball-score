@@ -56,7 +56,7 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 /* 中右：スコア */
 .footer-score{display:flex;align-items:center;gap:4px;flex-shrink:0;}
 .footer-score-team{text-align:center;}
-.footer-score-name{font-size:11px;max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.footer-score-name{font-size:11px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .footer-score-num{font-size:24px;font-weight:900;line-height:1;}
 .footer-score-num.away{color:#ff8a80;}.footer-score-num.home{color:#80d8ff;}
 .footer-score-sep{font-size:13px;color:rgba(255,255,255,.85);}
@@ -66,7 +66,7 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 .footer-count{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
 .count-row{display:flex;align-items:center;gap:2px;}
 .count-label{font-size:11px;color:rgba(255,255,255,.9);width:8px;}
-.cdot{width:8px;height:8px;border-radius:50%;}
+.cdot{width:10px;height:10px;border-radius:50%;}
 .cdot-B.on{background:#ffeb3b;}.cdot-B.off{background:rgba(255,255,255,.15);}
 .cdot-S.on{background:#ff8a80;}.cdot-S.off{background:rgba(255,255,255,.15);}
 /* ユーティリティボタン行 */
@@ -115,10 +115,10 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 .btn:active{transform:scale(.94);opacity:.85;}
 .btn.disabled{opacity:.5;pointer-events:none;cursor:not-allowed;}
 .btn-ball{background:var(--navy);color:#fff;}
-.btn-smiss{background:#e8edf5;color:#0f1f3d;font-weight:900;}
+.btn-smiss{background:#dde4f0;color:#0a1628;font-weight:900;}
 .btn-swing{background:#fde8e8;color:#900;}
-.btn-foul{background:#f5e6d0;color:#6b3300;}
-.btn-hbp{background:#f0e090;color:#4a3200;}
+.btn-foul{background:#f0dcc0;color:#3d1e00;}
+.btn-hbp{background:#e8d878;color:#332800;}
 .btn-del{background:#ededf0;color:#444;flex:0 0 44px;font-size:16px;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:48px;}
 /* ヘルプボタン */
 .help-btn{flex-shrink:0;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(0,0,0,.22);
@@ -174,14 +174,14 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 .rbtn-sub{font-size:11px;color:rgba(255,255,255,.95);font-weight:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;width:100%;}
 /* 状況的に起こり得ないボタン */
 /* impossible: グレーアウト・タップ不可・斜線パターン */
-.rbtn.unavailable{opacity:.45;cursor:not-allowed;pointer-events:none;filter:grayscale(.6);}
+.rbtn.unavailable{opacity:.55;cursor:not-allowed;pointer-events:none;filter:grayscale(.4);}
 .rbtn.unavailable:active{transform:none;}
-.runner-btn.unavailable{opacity:.45;cursor:not-allowed;pointer-events:none;filter:grayscale(.6);}
+.runner-btn.unavailable{opacity:.55;cursor:not-allowed;pointer-events:none;filter:grayscale(.4);}
 .runner-btn.unavailable:active{transform:none;}
-/* unlikely: 破線ボーダーで区別・タップ可（確認ダイアログあり） */
-.rbtn.unlikely{opacity:.85;cursor:pointer;outline:2px dashed rgba(255,255,255,.5);outline-offset:-2px;}
+/* unlikely: 実線ボーダーで区別・タップ可（確認ダイアログあり） */
+.rbtn.unlikely{opacity:.9;cursor:pointer;outline:2px solid rgba(255,255,255,.6);outline-offset:-2px;}
 .rbtn.unlikely:active{transform:scale(.93);}
-.runner-btn.unlikely{opacity:.85;cursor:pointer;outline:2px dashed rgba(255,255,255,.5);outline-offset:-2px;}
+.runner-btn.unlikely{opacity:.9;cursor:pointer;outline:2px solid rgba(255,255,255,.6);outline-offset:-2px;}
 .runner-btn.unlikely:active{transform:scale(.93);}
 
 /* ===走者イベント=== */
@@ -203,7 +203,7 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 
 /* ===取り消しボタン=== */
 .undo-btn{width:100%;background:#fff;color:var(--c-danger);border:2px solid var(--c-danger);border-radius:9px;padding:10px;font-size:14px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.undo-btn:disabled{background:#f5f5f5;color:#999;border-color:#ddd;cursor:default;}
+.undo-btn:disabled{background:#f5f5f5;color:#777;border-color:#bbb;cursor:default;}
 .undo-btn:not(:disabled):active{background:#fff3e0;}
 
 /* ===モーダル=== */
@@ -252,8 +252,8 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 .sbd-table td.total-td{font-size:17px;font-weight:900;background:#f8f9fa;}
 .sbd-score{font-weight:bold;font-size:13px;margin-bottom:1px;}
 .sbd-btns{display:flex;justify-content:center;gap:1px;}
-.sbd-btn{border:none;border-radius:3px;width:14px;height:14px;cursor:pointer;font-size:11px;padding:0;line-height:14px;font-weight:bold;}
-.sbd-btn.plus{background:#e8f5e9;color:#2e7d32;}.sbd-btn.minus{background:#fce4ec;color:#c62828;}
+.sbd-btn{border:none;border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:14px;padding:0;line-height:20px;font-weight:bold;}
+.sbd-btn.plus{background:#c8e6c9;color:#1b5e20;}.sbd-btn.minus{background:#ffcdd2;color:#b71c1c;}
 .sbd-cur{background:#fff9c4 !important;}
 
 /* ===スコアブックタブ=== */
@@ -572,12 +572,12 @@ var RESULT_GROUPS={
 
   // ─── ヒット ───
   hit:[
-    {code:"1H",  label:"ヒット",      sub:"1塁へ",    color:"#2e7d32",wiz:true},
+    {code:"1H",  label:"ヒット",      sub:"1塁へ",    color:"#388e3c",wiz:true},
     {code:"2H",  label:"二塁打",      sub:"2塁へ",    color:"#2e7d32",wiz:true},
-    {code:"3H",  label:"三塁打",      sub:"3塁へ",    color:"#2e7d32",wiz:true},
-    {code:"HR",  label:"ホームラン",  sub:"1周して得点",color:"#2e7d32"},
-    {code:"RH",  label:"ランニングHR",sub:"走り抜け",  color:"#2e7d32"},
-    {code:"BH",  label:"バントヒット",sub:"バント安打", color:"#2e7d32",wiz:true}
+    {code:"3H",  label:"三塁打",      sub:"3塁へ",    color:"#1b5e20",wiz:true},
+    {code:"HR",  label:"ホームラン",  sub:"1周して得点",color:"#b71c1c"},
+    {code:"RH",  label:"ランニングHR",sub:"走り抜け",  color:"#c62828"},
+    {code:"BH",  label:"バントヒット",sub:"バント安打", color:"#558b2f",wiz:true}
   ],
 
   // ─── 出塁（ヒット以外）───
@@ -3215,55 +3215,55 @@ function renderSetup(){
   }).join("");
   var meta=S.meta||{};
   var todayStr=meta.date||(function(){var d=new Date();return d.getFullYear()+"-"+(d.getMonth()<9?"0":"")+(d.getMonth()+1)+"-"+(d.getDate()<10?"0":"")+d.getDate();})();
-  var metaSection='<div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px 12px;margin-bottom:10px;">'+
-    '<div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:bold;margin-bottom:8px;letter-spacing:.5px">試合情報（任意）</div>'+
+  var metaSection='<div style="background:#eef1f6;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #dde0e6;">'+
+    '<div style="font-size:11px;color:#666;font-weight:bold;margin-bottom:8px;letter-spacing:.5px">試合情報（任意）</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'+
-      '<input type="date" id="metaDate" value="'+todayStr+'" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;" placeholder="日付">'+
-      '<input type="text" id="metaTournament" value="'+(meta.tournament||"")+'" placeholder="大会・試合名" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
-      '<input type="text" id="metaVenue" value="'+(meta.venue||"")+'" placeholder="球場・グラウンド名" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
-      '<select id="metaWeather" style="background:rgba(30,30,50,.95);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:7px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
+      '<input type="date" id="metaDate" value="'+todayStr+'" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
+      '<input type="text" id="metaTournament" value="'+(meta.tournament||"")+'" placeholder="大会・試合名" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
+      '<input type="text" id="metaVenue" value="'+(meta.venue||"")+'" placeholder="球場・グラウンド名" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
+      '<select id="metaWeather" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
         ['','晴れ☀️','曇り☁️','雨🌧️','強風💨'].map(function(w){return'<option value="'+w+'"'+(meta.weather===w?' selected':'')+'>'+( w||'天気を選択')+'</option>';}).join('')+
       '</select>'+
     '</div>'+
     '<div style="margin-top:8px;">'+
-      '<div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:4px;">イニング数</div>'+
+      '<div style="font-size:11px;color:#666;margin-bottom:4px;">イニング数</div>'+
       '<div style="display:flex;gap:6px;">'+
         [5,6,7,9].map(function(n){
           var sel=(S.maxInnings||7)===n;
-          return'<button type="button" id="maxInn'+n+'" style="flex:1;padding:7px 4px;border-radius:7px;border:2px solid '+(sel?'#fff':'rgba(255,255,255,.25)')+';background:'+(sel?'rgba(255,255,255,.25)':'transparent')+';color:#fff;font-size:13px;font-weight:'+(sel?'bold':'normal')+';cursor:pointer;">'+n+'回</button>';
+          return'<button type="button" id="maxInn'+n+'" style="flex:1;padding:7px 4px;border-radius:7px;border:2px solid '+(sel?'#1a3a6e':'#bbb')+';background:'+(sel?'#1a3a6e':'#fff')+';color:'+(sel?'#fff':'#333')+';font-size:13px;font-weight:'+(sel?'bold':'normal')+';cursor:pointer;">'+n+'回</button>';
         }).join('')+
       '</div>'+
     '</div>'+
     (function(){
       var tb=S.tiebreaker||{enabled:false};
-      return'<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,.15);padding-top:8px;">'+
+      return'<div style="margin-top:8px;border-top:1px solid #dde0e6;padding-top:8px;">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
           '<div>'+
-            '<span style="font-size:11px;color:rgba(255,255,255,.6);">タイブレーク（延長戦）</span>'+
-            '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:1px">延長から2塁走者スタート</div>'+
+            '<span style="font-size:11px;color:#555;">タイブレーク（延長戦）</span>'+
+            '<div style="font-size:10px;color:#999;margin-top:1px">延長から2塁走者スタート</div>'+
           '</div>'+
-          '<button type="button" id="tiebreakerToggle" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(tb.enabled?'#fff':'rgba(255,255,255,.35)')+';background:'+(tb.enabled?'rgba(255,255,255,.25)':'transparent')+';color:#fff;font-size:12px;font-weight:bold;cursor:pointer;">'+(tb.enabled?'✓ 有効':'無効')+'</button>'+
+          '<button type="button" id="tiebreakerToggle" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(tb.enabled?'#1a3a6e':'#bbb')+';background:'+(tb.enabled?'#1a3a6e':'#fff')+';color:'+(tb.enabled?'#fff':'#555')+';font-size:12px;font-weight:bold;cursor:pointer;">'+(tb.enabled?'✓ 有効':'無効')+'</button>'+
         '</div>'+
       '</div>';
     })()+
     (function(){
       var cg=S.coldGame||{enabled:false,runs:10,fromInning:3};
-      return'<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,.15);padding-top:8px;">'+
+      return'<div style="margin-top:4px;border-top:1px solid #dde0e6;padding-top:8px;">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
-          '<span style="font-size:11px;color:rgba(255,255,255,.6);">コールドゲーム</span>'+
-          '<button type="button" id="coldGameToggle" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(cg.enabled?'#fff':'rgba(255,255,255,.35)')+';background:'+(cg.enabled?'rgba(255,255,255,.25)':'transparent')+';color:#fff;font-size:12px;font-weight:bold;cursor:pointer;">'+(cg.enabled?'✓ 有効':'無効')+'</button>'+
+          '<span style="font-size:11px;color:#555;">コールドゲーム</span>'+
+          '<button type="button" id="coldGameToggle" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(cg.enabled?'#1a3a6e':'#bbb')+';background:'+(cg.enabled?'#1a3a6e':'#fff')+';color:'+(cg.enabled?'#fff':'#555')+';font-size:12px;font-weight:bold;cursor:pointer;">'+(cg.enabled?'✓ 有効':'無効')+'</button>'+
         '</div>'+
         (cg.enabled?
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:rgba(255,255,255,.7);">'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:#555;">'+
             '<div>'+
               '<div style="margin-bottom:3px">点差</div>'+
-              '<select id="coldRunsDiff" style="background:rgba(30,30,50,.95);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:6px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
+              '<select id="coldRunsDiff" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:6px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
                 [5,7,8,10,12,15].map(function(n){return'<option value="'+n+'"'+(cg.runs===n?' selected':'')+'>'+n+'点差</option>';}).join('')+
               '</select>'+
             '</div>'+
             '<div>'+
               '<div style="margin-bottom:3px">適用回以降</div>'+
-              '<select id="coldFromInn" style="background:rgba(30,30,50,.95);border:1px solid rgba(255,255,255,.2);border-radius:7px;padding:6px 8px;color:#fff;font-size:12px;width:100%;box-sizing:border-box;">'+
+              '<select id="coldFromInn" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:6px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
                 [3,4,5,6].map(function(n){return'<option value="'+n+'"'+(cg.fromInning===n?' selected':'')+'>'+n+'回以降</option>';}).join('')+
               '</select>'+
             '</div>'+
@@ -3487,7 +3487,7 @@ function renderGame(){
       });
     }
     var skipGuideBtn=_skipable
-      ? '<button id="skipBatterBtn" style="flex-shrink:0;margin-left:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:bold;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">'+
+      ? '<button id="skipBatterBtn" style="flex-shrink:0;margin-left:8px;background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.7);color:#fff;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:bold;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">'+
           '⏭ 後で入力'+(_pc>0?'<span style="background:#fff;color:#e65100;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;">'+_pc+'</span>':'')+
         '</button>'
       : '';
@@ -3639,7 +3639,7 @@ function renderInputTab(){
           var tabs=[
             {id:"hit",   label:"◎ ヒット", desc:"打って塁に出た",     activeColor:"#2e7d32", inactiveColor:"#e8f5e9", inactiveFg:"#2e7d32"},
             {id:"reach", label:"○ 出塁",   desc:"ミスや妨害で出塁",   activeColor:"#0277bd", inactiveColor:"#e3f2fd", inactiveFg:"#0277bd"},
-            {id:"out",   label:"✕ アウト", desc:"打者がアウト",       activeColor:"#455a64", inactiveColor:"#e8eaed", inactiveFg:"#546e7a"}
+            {id:"out",   label:"✕ アウト", desc:"打者がアウト",       activeColor:"#455a64", inactiveColor:"#e0e2e5", inactiveFg:"#37474f"}
           ];
           return tabs.map(function(t){
             var isActive=S.resultTab===t.id;
@@ -3734,7 +3734,7 @@ function renderInputTab(){
 
     // ── 交代・操作 ──
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">'+
-      '<button class="runner-btn" style="background:#5d4037" data-change="pitcher"><span class="rlabel">投手交代</span></button>'+
+      '<button class="runner-btn" style="background:#37474f" data-change="pitcher"><span class="rlabel">投手交代</span></button>'+
       '<button class="runner-btn" style="background:#00695c" data-change="hitter"><span class="rlabel">代打</span></button>'+
       '<button class="runner-btn" style="background:#1565c0" data-change="runner"><span class="rlabel">代走</span></button>'+
     '</div>'+
@@ -5831,7 +5831,7 @@ function renderScoreboard(){
     // 自責点行
     var erCells=Array.from({length:MAX_INNINGS},function(_,i){
       var er=(S.game[side][i]&&S.game[side][i].earnedRuns)||0;
-      return'<td style="font-size:10px;color:'+(er>0?"#e65100":"#ccc")+'">'+er+'</td>';
+      return'<td style="font-size:10px;color:'+(er>0?"#e65100":"#aaa")+'">'+er+'</td>';
     }).join("");
     return'<tr><td class="team-td"><div style="font-weight:bold;font-size:11px">'+name+'</div><div style="font-size:11px;color:#999">'+label+'</div></td>'+
       cells+'<td class="total-td" style="color:'+(side==="top"?"#e53935":"#1a3a6e")+'">'+totalScore(side)+'</td></tr>'+
