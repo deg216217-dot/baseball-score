@@ -672,6 +672,12 @@ function getResultAvailability(code){
       if(strikes<2) return"unlikely";   // 2ストライク未満では3バント失敗はない
       return"ok";
 
+    // ── 野選（フィールダースチョイス） ──
+    // 走者がいないと野選は起こり得ない（野選=走者をアウトにしようとして別の走者を選んだ結果）
+    case "FC":
+      if(!hasAny) return"impossible";
+      return"ok";
+
     // ── 振り逃げ ──
     case "KWP":
       if(outs>=2) return"ok";         // 2アウトなら常に振り逃げ可
@@ -892,7 +898,7 @@ function initState(){
     // ── 試合メタ情報 ──
     meta:{ date:"", tournament:"", venue:"", weather:"" },
     // ── イニング数・試合終了 ──
-    maxInnings: 7,
+    maxInnings: 5,
     gameEnded: false,
     gameResult: null,  // "win" | "lose" | "draw" | null
     // ── コールドゲーム ──
@@ -2454,7 +2460,7 @@ function doChange(){
   showChangeOverlay(nextSide,nextInning+1,function(){
     S.curSide=nextSide;S.curInning=nextInning;
     // ── タイブレーク: 延長イニングで2塁走者自動配置 ──
-    if(S.tiebreaker&&S.tiebreaker.enabled&&nextInning>=(S.maxInnings||7)){
+    if(S.tiebreaker&&S.tiebreaker.enabled&&nextInning>=(S.maxInnings||5)){
       if(!S.curBases.includes(2)){
         S.curBases.push(2);
         // 走者情報は不明なので仮のorderを設定
@@ -3133,7 +3139,7 @@ function loadFromStorage(){
     S.pitchers   = data.pitchers||{top:[],bottom:[]};
     S.history    = data.history||[];
     S.meta       = data.meta||{date:"",tournament:"",venue:"",weather:""};
-    S.maxInnings = data.maxInnings||7;
+    S.maxInnings = data.maxInnings||5;
     S.gameEnded  = data.gameEnded||false;
     S.gameResult = data.gameResult||null;
     S.coldGame   = data.coldGame||{enabled:false,runs:10,fromInning:3};
@@ -3160,7 +3166,7 @@ function saveGameToSeason(){
       homeScore: homeS,
       result: S.gameResult||"draw",
       innings: S.curInning+1,
-      maxInnings: S.maxInnings||7
+      maxInnings: S.maxInnings||5
     };
     var raw=localStorage.getItem(SEASON_KEY);
     var list=[];
@@ -3229,7 +3235,7 @@ function renderSetup(){
       '<div style="font-size:11px;color:#666;margin-bottom:4px;">イニング数</div>'+
       '<div style="display:flex;gap:6px;">'+
         [5,6,7,9].map(function(n){
-          var sel=(S.maxInnings||7)===n;
+          var sel=(S.maxInnings||5)===n;
           return'<button type="button" id="maxInn'+n+'" style="flex:1;padding:7px 4px;border-radius:7px;border:2px solid '+(sel?'#1a3a6e':'#bbb')+';background:'+(sel?'#1a3a6e':'#fff')+';color:'+(sel?'#fff':'#333')+';font-size:13px;font-weight:'+(sel?'bold':'normal')+';cursor:pointer;">'+n+'回</button>';
         }).join('')+
       '</div>'+
@@ -3422,8 +3428,9 @@ function renderGame(){
             var nextIdx=(curOrder()+1)%9;
             var nextP=curTeam().players[nextIdx];
             var nextName=nextP?(nextP.number?"#"+nextP.number+" ":"")+nextP.name:"";
+            var livePitchCount=(pt.pitchCount||0)+(S.curPitches?S.curPitches.length:0);
             var pitcherLine=pt
-              ?'<div class="footer-batter-sub" style="color:rgba(255,255,255,.7);display:flex;align-items:center;gap:3px;flex-wrap:wrap">投手 '+(pt.number?"#"+pt.number+" ":"")+pt.name+' '+pitchWarnBadge(pt.pitchCount||0)+(!(pt.pitchCount>=60)?'<span style="font-size:11px;opacity:.7">'+pt.pitchCount+'球</span>':'')+'</div>'
+              ?'<div class="footer-batter-sub" style="color:rgba(255,255,255,.7);display:flex;align-items:center;gap:3px;flex-wrap:wrap">投手 '+(pt.number?"#"+pt.number+" ":"")+pt.name+' '+pitchWarnBadge(livePitchCount)+(!(livePitchCount>=60)?'<span style="font-size:11px;opacity:.7">'+livePitchCount+'球</span>':'')+'</div>'
               :'<div class="footer-batter-sub" style="color:rgba(255,255,255,.6)">'+pPos+' '+(curOrder()+1)+'番打者</div>';
             var deckLine=nextName?'<div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:1px">次打者: '+nextName+'</div>':'';
             return pitcherLine+deckLine;
@@ -5818,10 +5825,26 @@ function renderBattingStats(){
 }
 
 function renderScoreboard(){
-  var innH=Array.from({length:MAX_INNINGS},function(_,i){return'<th class="'+(S.curInning===i?"cur-inn":"")+'">'+(i+1)+'</th>';}).join("");
+  // 表示イニング数: 基本はS.maxInnings、試合進行で超えたら自動拡張、手動拡張も可能
+  var baseInnings=S.maxInnings||5;
+  // 実際にプレーされた最後のイニングを検出（空配列要素は無視）
+  var playedInnings=S.curInning+1;
+  ["top","bottom"].forEach(function(side){
+    (S.game[side]||[]).forEach(function(inn,i){
+      if(inn&&((inn.atBats&&inn.atBats.length>0)||(inn.events&&inn.events.length>0)||inn.score>0)){
+        playedInnings=Math.max(playedInnings,i+1);
+      }
+    });
+  });
+  var displayInnings=S.sbExpandedInnings||Math.max(baseInnings, playedInnings);
+  if(displayInnings<playedInnings) displayInnings=playedInnings;
+  var canExpand=displayInnings<MAX_INNINGS;
+  var canShrink=displayInnings>Math.max(baseInnings, playedInnings);
+
+  var innH=Array.from({length:displayInnings},function(_,i){return'<th class="'+(S.curInning===i?"cur-inn":"")+'" style="'+(i>=baseInnings?'color:#1565c0;':'') +'">'+(i+1)+'</th>';}).join("");
   var rows=[["top",S.awayTeam.name,"先攻"],["bottom",S.homeTeam.name,"後攻"]].map(function(arr){
     var side=arr[0],name=arr[1],label=arr[2];
-    var cells=Array.from({length:MAX_INNINGS},function(_,i){
+    var cells=Array.from({length:displayInnings},function(_,i){
       var sc=(S.game[side][i]&&S.game[side][i].score)||0;
       var cur=S.curSide===side&&S.curInning===i;
       return'<td class="'+(cur?"sbd-cur":"")+'"><div class="sbd-score" style="color:'+(sc>0?"#e53935":"#333")+'">'+sc+'</div>'+
@@ -5829,7 +5852,7 @@ function renderScoreboard(){
         '<button class="sbd-btn minus" data-side="'+side+'" data-inning="'+i+'" data-d="-1">-</button></div></td>';
     }).join("");
     // 自責点行
-    var erCells=Array.from({length:MAX_INNINGS},function(_,i){
+    var erCells=Array.from({length:displayInnings},function(_,i){
       var er=(S.game[side][i]&&S.game[side][i].earnedRuns)||0;
       return'<td style="font-size:10px;color:'+(er>0?"#e65100":"#aaa")+'">'+er+'</td>';
     }).join("");
@@ -5838,8 +5861,16 @@ function renderScoreboard(){
       '<tr style="background:#fffde7"><td style="padding:2px 7px;font-size:11px;color:#888">自責点</td>'+erCells+'<td style="font-size:11px;font-weight:bold;color:#e65100;text-align:center;background:#fffde7">'+
         (S.game[side]||[]).reduce(function(a,i){return a+(i.earnedRuns||0);},0)+'</td></tr>';
   }).join("");
+  var expandBtn=canExpand
+    ?'<button id="sbExpandBtn" style="margin-top:6px;background:#e3f2fd;border:1px solid #90caf9;color:#1565c0;border-radius:7px;padding:5px 14px;font-size:11px;font-weight:bold;cursor:pointer;">延長 ＋1回追加</button>'
+    :'';
+  var shrinkBtn=canShrink
+    ?'<button id="sbShrinkBtn" style="margin-top:6px;margin-left:6px;background:#fff;border:1px solid #ddd;color:#888;border-radius:7px;padding:5px 14px;font-size:11px;font-weight:bold;cursor:pointer;">延長を戻す</button>'
+    :'';
+  var innCtrl=(expandBtn||shrinkBtn)?'<div style="display:flex;align-items:center;gap:4px;padding:0 2px">'+expandBtn+shrinkBtn+'</div>':'';
   return'<div style="padding:10px 10px 8px"><div class="card" style="padding:8px 6px;overflow-x:auto;">'+
     '<table class="sbd-table"><thead><tr><th class="team-th">チーム</th>'+innH+'<th class="total-th">計</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    innCtrl+
     '<div style="font-size:10px;color:#888;margin-top:6px;padding:0 2px">💡 「自責点」＝守備ミスなしで入った点。投手の成績として記録されます</div>'+
   '</div>'+
   '<button id="copyScoreBtn" style="display:block;width:calc(100% - 20px);margin:8px 10px 4px;padding:10px;background:#fff;border:1.5px solid #1a3a6e;color:#1a3a6e;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer">📋 スコアをコピー</button>'+
@@ -6052,6 +6083,7 @@ function renderTips(){
     "投手・選手交代":"#4527a0","統計・記録":"#00695c"
   };
   var html='<div style="padding:10px 12px 80px;">';
+  html+='<button id="tipsBackBtn" style="background:#f0f2f5;border:1px solid #ddd;color:#444;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:bold;cursor:pointer;margin-bottom:10px;">◀ スコア一覧に戻る</button>';
   html+='<div style="font-size:15px;font-weight:bold;color:#1a3a6e;margin-bottom:4px">📝 スコア記録ガイド</div>';
   html+='<div style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.5">試合中にいつでも確認できます。タップして回答を表示。</div>';
   var lastCat='';
@@ -6231,6 +6263,7 @@ function bindEvents(){
   render();
 });
     onAll(".sbtab-btn","click",function(e){S.sbSubTab=e.currentTarget.dataset.sbtab;render();});
+    on("tipsBackBtn","click",function(){S.sbSubTab="log";render();});
     // セットアップ
     onAll(".ttbtn","click",function(e){S.setupSide=e.currentTarget.dataset.side;render();});
     var tnInput=document.querySelector("[data-field='teamname']");
@@ -6652,6 +6685,18 @@ function bindEvents(){
       if(navigator.clipboard&&navigator.clipboard.writeText){
         navigator.clipboard.writeText(txt).then(function(){alert("コピーしました！");}).catch(function(){prompt("コピーしてください",txt);});
       } else {prompt("コピーしてください",txt);}
+    });
+    // スコアボード延長ボタン
+    on("sbExpandBtn","click",function(){
+      var cur=S.sbExpandedInnings||S.maxInnings||5;
+      if(cur<MAX_INNINGS){S.sbExpandedInnings=cur+1;render();}
+    });
+    on("sbShrinkBtn","click",function(){
+      var base=S.maxInnings||5;
+      var played=Math.max(S.curInning+1,(S.game.top||[]).length,(S.game.bottom||[]).length);
+      var min=Math.max(base,played);
+      var cur=S.sbExpandedInnings||min;
+      if(cur>min){S.sbExpandedInnings=cur-1;render();}
     });
     // 試合終了ボタン
     on("endGameBtn","click",function(){
