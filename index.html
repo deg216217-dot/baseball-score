@@ -15,15 +15,25 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
-  /* ── 役割別カラー（6色に絞る）── */
+  /* ── フォントサイズスケール（5段階 + 特殊）── */
+  --fs-xs:10px;  /* バッジ・注釈 */
+  --fs-sm:12px;  /* 補助テキスト・サブラベル */
+  --fs-md:14px;  /* 本文・ボタンラベル */
+  --fs-lg:16px;  /* 見出し・強調 */
+  --fs-xl:20px;  /* 大見出し・シンボル */
+  --fs-2xl:24px; /* スコア数字 */
+  --fs-hero:52px;/* チェンジ演出 */
+
+  /* ── 役割別カラー（7色）── */
   --navy:#0f1f3d;--navy2:#1a3a6e;
-  --c-out:#455a64;        /* アウト系 — より濃いブルーグレー（白文字コントラスト確保） */
+  --c-out:#455a64;        /* アウト系 — ブルーグレー */
   --c-hit:#2e7d32;        /* ヒット系 — 緑 */
   --c-reach:#0277bd;      /* 出塁系  — 青 */
   --c-runner:#37474f;     /* 走者系  — 暗グレー */
   --c-danger:#e65100;     /* 取消・警告 — オレンジ */
   --c-change:#455a64;     /* チェンジ  — スレートグレー */
-  --purple: #6a1b9a;       /* 紫 - 特殊記号用 */
+  --c-special:#6a1b9a;    /* 紫 — 特殊記号・振逃 */
+  --purple:#6a1b9a;       /* 後方互換 */
   /* ── 維持 ── */
   --red:#e53935;--green:#1b7a3e;--bg:#f4f6f9;--white:#fff;--gray:#555;
 }
@@ -40,42 +50,42 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 .footer-main{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
 /* 左：イニング＋アウト */
 .footer-inn{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;min-width:38px;}
-.inning-half-tag{font-size:13px;font-weight:900;padding:1px 5px;border-radius:20px;white-space:nowrap;}
+.inning-half-tag{font-size:13px;font-weight:bold;padding:1px 5px;border-radius:20px;white-space:nowrap;}
 .top-side .inning-half-tag{background:#ff8a80;color:#1a3a6e;}
 .bottom-side .inning-half-tag{background:#ffb3ba;color:#7b1a2a;}
-.inning-num{font-size:16px;font-weight:900;line-height:1;}
+.inning-num{font-size:var(--fs-lg);font-weight:900;line-height:1;}
 .out-area{display:flex;align-items:center;gap:2px;}
 .out-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);}
 .out-dot.on{background:#ff5252;}.out-dot.off{background:rgba(255,255,255,.18);}
 /* 中左：打者＋ダイヤモンド */
 .footer-batter{flex:1;min-width:0;display:flex;align-items:center;gap:5px;}
 .footer-batter-info{flex:1;min-width:0;}
-.footer-batter-name{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;}
-.footer-batter-sub{font-size:12px;color:rgba(255,255,255,.85);white-space:nowrap;}
+.footer-batter-name{font-size:var(--fs-md);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;}
+.footer-batter-sub{font-size:var(--fs-sm);color:rgba(255,255,255,.85);white-space:nowrap;}
 .footer-pitch-seq{display:flex;flex-wrap:nowrap;gap:2px;margin-top:2px;overflow:hidden;max-width:80px;}
 /* 中右：スコア */
 .footer-score{display:flex;align-items:center;gap:4px;flex-shrink:0;}
 .footer-score-team{text-align:center;}
-.footer-score-name{font-size:11px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.footer-score-num{font-size:24px;font-weight:900;line-height:1;}
+.footer-score-name{font-size:var(--fs-sm);max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.footer-score-num{font-size:var(--fs-2xl);font-weight:900;line-height:1;}
 .footer-score-num.away{color:#ff8a80;}.footer-score-num.home{color:#80d8ff;}
-.footer-score-sep{font-size:13px;color:rgba(255,255,255,.85);}
+.footer-score-sep{font-size:var(--fs-sm);color:rgba(255,255,255,.85);}
 .footer-score-team.batting .footer-score-name{opacity:1;}
 .footer-score-team.batting .footer-score-num{text-shadow:0 0 8px rgba(255,255,255,.4);}
 /* カウントドット */
 .footer-count{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
 .count-row{display:flex;align-items:center;gap:2px;}
-.count-label{font-size:11px;color:rgba(255,255,255,.9);width:8px;}
+.count-label{font-size:var(--fs-sm);color:rgba(255,255,255,.9);width:8px;}
 .cdot{width:10px;height:10px;border-radius:50%;}
 .cdot-B.on{background:#ffeb3b;}.cdot-B.off{background:rgba(255,255,255,.15);}
 .cdot-S.on{background:#ff8a80;}.cdot-S.off{background:rgba(255,255,255,.15);}
 /* ユーティリティボタン行 */
 .bb-utils{display:flex;gap:4px;margin-bottom:3px;}
-.bb-util-btn{flex:1;border:none;border-radius:7px;padding:5px 3px;font-size:11px;font-weight:bold;cursor:pointer;background:rgba(255,255,255,.15);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bb-util-btn{flex:1;border:none;border-radius:7px;padding:7px 3px;font-size:var(--fs-sm);font-weight:bold;cursor:pointer;background:rgba(255,255,255,.15);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:36px;display:flex;align-items:center;justify-content:center;}
 .bb-util-btn:active{background:rgba(255,255,255,.28);}
 /* タブ */
 .tabs{display:flex;border-top:1px solid rgba(255,255,255,.1);}
-.tab-btn{flex:1;padding:8px 0;border:none;background:none;color:rgba(255,255,255,.85);cursor:pointer;font-size:13px;font-weight:bold;border-top:2px solid transparent;transition:all .15s;min-height:44px;}
+.tab-btn{flex:1;padding:8px 0;border:none;background:none;color:rgba(255,255,255,.85);cursor:pointer;font-size:var(--fs-sm);font-weight:bold;border-top:2px solid transparent;transition:all .15s;min-height:44px;}
 .tab-btn.active{color:#fff;border-top:2px solid #ff8a80;}
 
 /* ===チェンジ演出=== */
@@ -84,45 +94,45 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 @keyframes pulse{0%,100%{box-shadow:0 0 0 2px #ff8a80;}50%{box-shadow:0 0 0 5px rgba(255,138,128,.3);}}
 .change-overlay.to-top{background:linear-gradient(135deg,rgba(10,22,40,.9),rgba(26,58,110,.9));}
 .change-overlay.to-bottom{background:linear-gradient(135deg,rgba(26,10,10,.9),rgba(123,26,42,.9));}
-.change-big{font-size:52px;font-weight:900;letter-spacing:2px;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.5);}
-.change-sub{font-size:16px;margin-top:8px;color:rgba(255,255,255,.9);font-weight:bold;}
-.change-inn{font-size:13px;margin-top:4px;color:rgba(255,255,255,.9);}
+.change-big{font-size:var(--fs-hero);font-weight:900;letter-spacing:2px;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.5);}
+.change-sub{font-size:var(--fs-lg);margin-top:8px;color:rgba(255,255,255,.9);font-weight:bold;}
+.change-inn{font-size:var(--fs-sm);margin-top:4px;color:rgba(255,255,255,.9);}
 
 /* ===カード=== */
 .card{background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:5px;}
-.card-label{font-size:13px;color:#555;font-weight:bold;margin-bottom:6px;letter-spacing:0;display:flex;align-items:center;gap:5px;}
-.step-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--navy2);color:#fff;font-size:12px;font-weight:900;flex-shrink:0;}
+.card-label{font-size:var(--fs-md);color:var(--gray);font-weight:bold;margin-bottom:6px;letter-spacing:0;display:flex;align-items:center;gap:5px;}
+.step-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--navy2);color:#fff;font-size:var(--fs-sm);font-weight:bold;flex-shrink:0;}
 /* 走者エリア：走者なし時にdimmed */
 .runner-section.no-runners .runner-grid{opacity:.38;pointer-events:none;}
 .runner-section.no-runners .section-label{opacity:.5;}
-.runner-section.no-runners::after{content:"走者がいるときに使用";display:block;font-size:11px;color:#999;text-align:center;margin-top:3px;}
+.runner-section.no-runners::after{content:"走者がいるときに使用";display:block;font-size:var(--fs-sm);color:#999;text-align:center;margin-top:3px;}
 
 /* ===打者カード（フッター内に移動、旧カードは廃止）=== */
 .pitch-seq-inline{display:flex;gap:2px;flex-wrap:nowrap;overflow:hidden;}
-.auto-banner{border-radius:9px;padding:9px 12px;font-size:14px;font-weight:bold;display:flex;align-items:center;gap:7px;animation:pop .3s ease;margin-bottom:5px;}
+.auto-banner{border-radius:9px;padding:9px 12px;font-size:var(--fs-md);font-weight:bold;display:flex;align-items:center;gap:7px;animation:pop .3s ease;margin-bottom:5px;}
 @keyframes pop{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
 .auto-banner.bb{background:#e3f2fd;color:#0d47a1;border:1.5px solid #1565c0;}
 .auto-banner.k{background:#ffebee;color:#b71c1c;border:1.5px solid #c62828;}
-.auto-banner.info{background:#fff8e1;color:#e65100;border:1.5px solid #ffa000;font-size:12px;}
+.auto-banner.info{background:#fff8e1;color:var(--c-danger);border:1.5px solid #ffa000;font-size:var(--fs-sm);}
 
 /* ===投球ボタン=== */
 .pitch-row{display:flex;align-items:center;gap:4px;}
 .pitch-grid{display:flex;gap:4px;flex:1;}
-.btn{border:none;border-radius:9px;padding:3px 0 4px;height:48px;font-size:17px;font-weight:900;cursor:pointer;
+.btn{border:none;border-radius:9px;padding:3px 0 4px;height:48px;font-size:17px;font-weight:bold;cursor:pointer;
   transition:transform .08s,opacity .08s;flex:1;min-width:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;}
-.btn-sub{font-size:12px;font-weight:bold;color:inherit;line-height:1.2;letter-spacing:0;}
+.btn-sub{font-size:var(--fs-sm);font-weight:bold;color:inherit;line-height:1.2;letter-spacing:0;}
 .btn:active{transform:scale(.94);opacity:.85;}
 .btn.disabled{opacity:.5;pointer-events:none;cursor:not-allowed;}
 .btn-ball{background:var(--navy);color:#fff;}
-.btn-smiss{background:#dde4f0;color:#0a1628;font-weight:900;}
-.btn-swing{background:#fde8e8;color:#900;}
-.btn-foul{background:#f0dcc0;color:#3d1e00;}
-.btn-hbp{background:#e8d878;color:#332800;}
-.btn-del{background:#ededf0;color:#444;flex:0 0 44px;font-size:16px;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:48px;}
+.btn-smiss{background:#d0d5de;color:#0a1628;font-weight:bold;}
+.btn-swing{background:#d0d5de;color:#0a1628;}
+.btn-foul{background:#d0d5de;color:#0a1628;}
+.btn-hbp{background:#c8e6c9;color:#1b5e20;}
+.btn-del{background:#ededf0;color:#444;flex:0 0 44px;font-size:var(--fs-lg);box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:48px;}
 /* ヘルプボタン */
 .help-btn{flex-shrink:0;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(0,0,0,.22);
-  background:#fff;color:#666;font-size:14px;font-weight:900;cursor:pointer;
+  background:#fff;color:#666;font-size:var(--fs-md);font-weight:bold;cursor:pointer;
   display:flex;align-items:center;justify-content:center;line-height:1;}
 .help-btn:active{background:#f0f0f0;}
 
@@ -130,11 +140,11 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 .result-card{background:#fff;border-radius:10px;margin-bottom:4px;overflow:hidden;}
 .result-tabs{display:flex;background:#eef0f3;position:relative;}
 /* 非アクティブ: 役割の色味をtintで表示 */
-.result-tab{flex:1;padding:9px 2px;border:none;background:transparent;cursor:pointer;font-size:14px;font-weight:bold;color:#888;border-bottom:3px solid transparent;letter-spacing:0;transition:all .15s;}
+.result-tab{flex:1;padding:9px 2px;border:none;background:transparent;cursor:pointer;font-size:var(--fs-md);font-weight:bold;color:#888;border-bottom:3px solid transparent;letter-spacing:0;transition:all .15s;}
 .result-tab[data-rtab="out"]   {color:#78909c;}
 .result-tab[data-rtab="hit"]   {color:#388e3c;}
 .result-tab[data-rtab="reach"] {color:#1565c0;}
-.result-tab[data-rtab="special"]{color:#6a35a0;}
+.result-tab[data-rtab="special"]{color:var(--c-special);}
 /* アクティブ: 強調 + 白背景 */
 .result-tab.active-out{
   color:#fff;background:var(--c-out);border-bottom:3px solid var(--c-out);
@@ -143,22 +153,22 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
   color:#fff;background:var(--c-hit);border-bottom:3px solid var(--c-hit);
   border-radius:6px 6px 0 0;}
 .result-tab.active-reach{
-  color:#fff;background:var(--c-reach);border-bottom:3px solid var(--c-reach);
+  color:#fff;background:var(--c-hit);border-bottom:3px solid var(--c-hit);
   border-radius:6px 6px 0 0;}
 .result-tab.active-special{
-  color:#fff;background:#5c35a0;border-bottom:3px solid #5c35a0;
+  color:#fff;background:var(--c-special);border-bottom:3px solid var(--c-special);
   border-radius:6px 6px 0 0;}
 /* 結果エリアの左ボーダーでもカテゴリを表現 */
 .result-body{padding:5px 6px 7px;border-top:3px solid #eef0f3;transition:border-color .15s;}
 .result-body.tab-out   {border-top-color:var(--c-out);}
 .result-body.tab-hit   {border-top-color:var(--c-hit);}
-.result-body.tab-reach {border-top-color:var(--c-reach);}
-.result-body.tab-special{border-top-color:#5c35a0;}
+.result-body.tab-reach {border-top-color:var(--c-hit);}
+.result-body.tab-special{border-top-color:var(--c-special);}
 .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
 /* ②3列グリッド（高さ削減版） */
 .result-grid-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;}
 /* ③4列グリッド */
-.runner-grid-4col{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
+.runner-grid-4col{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;}
 .rbtn{
   border:none;border-radius:8px;
   padding:8px 6px;
@@ -170,8 +180,8 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
   overflow:hidden;position:relative;
 }
 .rbtn:active{transform:scale(.95);opacity:.85;}
-.rbtn-main{font-size:14px;font-weight:bold;line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;text-align:center;width:100%;}
-.rbtn-sub{font-size:11px;color:rgba(255,255,255,.95);font-weight:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;width:100%;}
+.rbtn-main{font-size:15px;font-weight:bold;line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;text-align:center;width:100%;}
+.rbtn-sub{font-size:var(--fs-sm);color:rgba(255,255,255,.95);font-weight:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;width:100%;}
 /* 状況的に起こり得ないボタン */
 /* impossible: グレーアウト・タップ不可・斜線パターン */
 .rbtn.unavailable{opacity:.55;cursor:not-allowed;pointer-events:none;filter:grayscale(.4);}
@@ -197,34 +207,34 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
   overflow:hidden;
 }
 .runner-btn:active{transform:scale(.95);opacity:.85;}
-.rlabel{font-size:12px;font-weight:bold;line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;text-align:center;width:100%;}
-.rsub{font-size:11px;color:rgba(255,255,255,.95);font-weight:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;width:100%;}
+.rlabel{font-size:13px;font-weight:bold;line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;text-align:center;width:100%;}
+.rsub{font-size:var(--fs-sm);color:rgba(255,255,255,.95);font-weight:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center;width:100%;}
 .runner-btn:active{transform:scale(.93);}
 
 /* ===取り消しボタン=== */
-.undo-btn{width:100%;background:#fff;color:var(--c-danger);border:2px solid var(--c-danger);border-radius:9px;padding:10px;font-size:14px;font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.undo-btn{width:100%;background:#fff;color:var(--c-danger);border:2px solid var(--c-danger);border-radius:9px;padding:10px;font-size:var(--fs-md);font-weight:bold;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .undo-btn:disabled{background:#f5f5f5;color:#777;border-color:#bbb;cursor:default;}
 .undo-btn:not(:disabled):active{background:#fff3e0;}
 
 /* ===モーダル=== */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;display:flex;align-items:flex-end;justify-content:center;touch-action:none;-webkit-overflow-scrolling:auto;}
 .modal-sheet{background:#fff;border-radius:20px 20px 0 0;padding:22px 20px 18px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;position:relative;z-index:201;}
-.modal-title{font-size:18px;font-weight:bold;margin-bottom:6px;color:var(--navy2);}
-.modal-sub{font-size:13px;color:var(--gray);margin-bottom:14px;line-height:1.6;}
-.modal-cancel{width:100%;background:#f0f0f0;color:#333;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:bold;cursor:pointer;margin-top:8px;min-height:48px;}
-.step-label{font-size:11px;color:#999;font-weight:bold;letter-spacing:.5px;margin-bottom:3px;}
-.step-q{font-size:16px;font-weight:bold;color:#1a3a6e;margin-bottom:10px;line-height:1.4;}
-.hint{font-size:13px;color:#666;background:#f8f9fa;border-radius:6px;padding:7px 9px;margin-bottom:8px;line-height:1.5;}
+.modal-title{font-size:18px;font-weight:bold;margin-bottom:6px;color:var(--navy2);} /* 18px=lg+2: モーダル見出しは特別に大きく */
+.modal-sub{font-size:var(--fs-sm);color:var(--gray);margin-bottom:14px;line-height:1.6;}
+.modal-cancel{width:100%;background:#f0f0f0;color:#333;border:none;border-radius:10px;padding:14px;font-size:var(--fs-md);font-weight:bold;cursor:pointer;margin-top:8px;min-height:48px;}
+.step-label{font-size:var(--fs-xs);color:#999;font-weight:bold;letter-spacing:.5px;margin-bottom:3px;}
+.step-q{font-size:var(--fs-lg);font-weight:bold;color:var(--navy2);margin-bottom:10px;line-height:1.4;}
+.hint{font-size:var(--fs-sm);color:#666;background:#f8f9fa;border-radius:6px;padding:7px 9px;margin-bottom:8px;line-height:1.5;}
 .sym-preview{background:#1a3a6e;color:#fff;border-radius:8px;padding:8px 12px;margin-bottom:9px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 4px rgba(0,0,0,.18);}
-.sym-preview .sym{font-size:20px;font-weight:900;font-family:monospace;}
-.sym-preview .desc{font-size:12px;color:rgba(255,255,255,.9);flex:1;}
+.sym-preview .sym{font-size:var(--fs-xl);font-weight:900;font-family:monospace;}
+.sym-preview .desc{font-size:var(--fs-sm);color:rgba(255,255,255,.9);flex:1;}
 .pos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;}
 .pos-btn{border:none;border-radius:9px;padding:10px 4px;cursor:pointer;transition:transform .07s,opacity .1s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;}
 .pos-btn:active{transform:scale(.92);}
-.pn{font-size:20px;font-weight:900;}
-.pos-btn .pp{font-size:12px;display:block;margin-top:1px;color:inherit;}
+.pn{font-size:var(--fs-xl);font-weight:900;}
+.pos-btn .pp{font-size:var(--fs-sm);display:block;margin-top:1px;color:inherit;}
 .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;}
-.choice-btn{border:none;border-radius:10px;padding:15px 10px;font-size:15px;font-weight:bold;cursor:pointer;transition:transform .07s;text-align:center;line-height:1.3;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.choice-btn{border:none;border-radius:10px;padding:15px 10px;font-size:var(--fs-md);font-weight:bold;cursor:pointer;transition:transform .07s;text-align:center;line-height:1.3;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:48px;}
 .choice-btn:active{transform:scale(.93);}
 .choice-btn.danger {background:#c62828; color:#fff;}   /* 赤 */
 .choice-btn.success{background:#2e7d32; color:#fff;}   /* 緑 */
@@ -232,105 +242,105 @@ html,body{height:100%;font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',san
 .choice-btn.gray   {background:#546e7a; color:#fff;}   /* ブルーグレー */
 .choice-btn.light  {background:#fff;    color:#1a3a6e; border:2px solid #1a3a6e;} /* 白×紺 */
 .choice-btn.primary{background:#1a3a6e; color:#fff;}   /* 紺 */
-.back-btn{background:#f5f5f5;border:1px solid #e0e0e0;color:#444;font-size:13px;cursor:pointer;padding:8px 12px;margin-bottom:8px;display:flex;align-items:center;gap:4px;border-radius:8px;font-weight:bold;width:100%;}
-.confirm-btn{width:100%;background:var(--green);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:bold;cursor:pointer;margin-top:4px;}
+.back-btn{background:#f5f5f5;border:1px solid #e0e0e0;color:#444;font-size:var(--fs-sm);cursor:pointer;padding:8px 12px;margin-bottom:8px;display:flex;align-items:center;gap:4px;border-radius:8px;font-weight:bold;width:100%;min-height:40px;}
+.confirm-btn{width:100%;background:var(--green);color:#fff;border:none;border-radius:10px;padding:13px;font-size:var(--fs-md);font-weight:bold;cursor:pointer;margin-top:4px;min-height:48px;}
 
 /* スコアブックプレビュー */
 .sb-modal .sb-diamond-wrap{display:flex;justify-content:center;background:#f8fffe;border-radius:11px;padding:8px;}
 .write-guide{background:#fffde7;border-radius:9px;padding:9px 11px;margin-bottom:12px;border-left:3px solid #f9a825;}
-.write-guide-title{font-size:13px;color:#e65100;font-weight:bold;margin-bottom:5px;}
-.write-guide-body{font-size:13px;color:#333;line-height:1.8;}
+.write-guide-title{font-size:var(--fs-sm);color:var(--c-danger);font-weight:bold;margin-bottom:5px;}
+.write-guide-body{font-size:var(--fs-sm);color:#333;line-height:1.8;}
 
 /* ===スコアボード=== */
-.sbd-table{width:100%;border-collapse:collapse;font-size:11px;}
-.sbd-table th{padding:6px 2px;text-align:center;background:var(--navy2);color:#fff;font-size:10px;}
+.sbd-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);}
+.sbd-table th{padding:6px 2px;text-align:center;background:var(--navy2);color:#fff;font-size:var(--fs-xs);}
 .sbd-table th.team-th{text-align:left;padding-left:7px;min-width:62px;}
 .sbd-table th.cur-inn{background:var(--red);}
 .sbd-table th.total-th{background:#0d2044;}
 .sbd-table td{padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;}
 .sbd-table td.team-td{padding:4px 7px;text-align:left;}
-.sbd-table td.total-td{font-size:17px;font-weight:900;background:#f8f9fa;}
-.sbd-score{font-weight:bold;font-size:13px;margin-bottom:1px;}
+.sbd-table td.total-td{font-size:var(--fs-lg);font-weight:900;background:#f8f9fa;}
+.sbd-score{font-weight:bold;font-size:var(--fs-sm);margin-bottom:1px;}
 .sbd-btns{display:flex;justify-content:center;gap:1px;}
-.sbd-btn{border:none;border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:14px;padding:0;line-height:20px;font-weight:bold;}
+.sbd-btn{border:none;border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:var(--fs-md);padding:0;line-height:20px;font-weight:bold;}
 .sbd-btn.plus{background:#c8e6c9;color:#1b5e20;}.sbd-btn.minus{background:#ffcdd2;color:#b71c1c;}
 .sbd-cur{background:#fff9c4 !important;}
 
 /* ===スコアブックタブ=== */
 .sb-filter{display:flex;gap:5px;margin-bottom:9px;overflow-x:auto;padding-bottom:2px;}
-.sb-filter-btn{border:none;border-radius:20px;padding:4px 11px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap;}
+.sb-filter-btn{border:none;border-radius:20px;padding:6px 12px;font-size:var(--fs-sm);font-weight:bold;cursor:pointer;white-space:nowrap;min-height:36px;}
 .sb-filter-btn.active{background:var(--navy2);color:#fff;}
 .sb-filter-btn:not(.active){background:#e8ecf2;color:#555;}
 .sb-inn-group{margin-bottom:13px;}
-.sb-inn-label{font-size:13px;font-weight:bold;color:var(--navy2);margin-bottom:7px;padding:3px 8px;background:#e8edf5;border-radius:6px;display:inline-block;}
+.sb-inn-label{font-size:var(--fs-sm);font-weight:bold;color:var(--navy2);margin-bottom:7px;padding:3px 8px;background:#e8edf5;border-radius:6px;display:inline-block;}
 .sb-ab-list{display:flex;flex-wrap:wrap;gap:7px;}
 .waseda-card{background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 5px rgba(0,0,0,.1);width:calc(50% - 4px);min-width:136px;cursor:pointer;}
 .waseda-card:active{opacity:.8;}
-.change-card{background:#fff8e1;border:1.5px solid #ffcc02;border-radius:10px;padding:7px 10px;width:100%;margin-bottom:4px;font-size:11px;color:#5d4037;font-weight:bold;}
+.change-card{background:#fff8e1;border:1.5px solid #ffcc02;border-radius:10px;padding:7px 10px;width:100%;margin-bottom:4px;font-size:var(--fs-sm);color:#5d4037;font-weight:bold;}
 .waseda-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
-.waseda-order{background:var(--navy2);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;flex-shrink:0;}
-.waseda-player{font-size:11px;font-weight:bold;color:#333;margin-left:4px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.waseda-sym{font-size:11px;font-weight:900;font-family:monospace;}
+.waseda-order{background:var(--navy2);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:bold;flex-shrink:0;}
+.waseda-player{font-size:var(--fs-sm);font-weight:bold;color:#333;margin-left:4px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.waseda-sym{font-size:var(--fs-sm);font-weight:900;font-family:monospace;}
 .waseda-pitches{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px;justify-content:center;}
 
 /* ===記録タブ=== */
 .log-inn{background:#fff;border-radius:11px;padding:9px;margin-bottom:7px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-.log-inn-hdr{display:flex;justify-content:space-between;font-size:13px;color:var(--gray);font-weight:bold;margin-bottom:7px;}
+.log-inn-hdr{display:flex;justify-content:space-between;font-size:var(--fs-sm);color:var(--gray);font-weight:bold;margin-bottom:7px;}
 .log-ab{display:flex;align-items:center;gap:5px;padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid #f5f5f5;}
 .log-ab:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
-.log-num{background:var(--navy2);color:#fff;border-radius:50%;min-width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;}
-.log-name{font-size:13px;font-weight:bold;min-width:42px;}
+.log-num{background:var(--navy2);color:#fff;border-radius:50%;min-width:21px;height:21px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:bold;}
+.log-name{font-size:var(--fs-sm);font-weight:bold;min-width:42px;}
 .log-pitches{display:flex;gap:2px;flex:1;flex-wrap:wrap;}
 .log-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-.result-badge{border-radius:5px;padding:2px 6px;font-size:10px;font-weight:bold;color:#fff;white-space:nowrap;font-family:monospace;}
-.defense-badge{border-radius:4px;padding:2px 5px;font-size:11px;font-weight:bold;background:#e3f2fd;color:#0d47a1;white-space:nowrap;}
-.event-badge{border-radius:4px;padding:2px 5px;font-size:11px;font-weight:bold;background:var(--purple);color:#fff;}
+.result-badge{border-radius:5px;padding:2px 6px;font-size:var(--fs-xs);font-weight:bold;color:#fff;white-space:nowrap;font-family:monospace;}
+.defense-badge{border-radius:4px;padding:2px 5px;font-size:var(--fs-sm);font-weight:bold;background:#e3f2fd;color:#0d47a1;white-space:nowrap;}
+.event-badge{border-radius:4px;padding:2px 5px;font-size:var(--fs-sm);font-weight:bold;background:var(--c-special);color:#fff;}
 
 /* ===セットアップ=== */
 .setup-page{height:100dvh;display:flex;flex-direction:column;background:var(--bg);}
 .setup-hdr{background:var(--navy);padding:14px 14px 10px;color:#fff;flex-shrink:0;}
-.setup-title{font-size:18px;font-weight:bold;text-align:center;margin-bottom:10px;}
+.setup-title{font-size:18px;font-weight:bold;text-align:center;margin-bottom:10px;} /* 18px: セットアップ見出し */
 .team-toggle{display:flex;border-radius:10px;overflow:hidden;border:1px solid #334;}
-.ttbtn{flex:1;padding:10px 0;border:none;cursor:pointer;font-size:13px;font-weight:bold;color:#fff;background:transparent;transition:background .2s;}
+.ttbtn{flex:1;padding:10px 0;border:none;cursor:pointer;font-size:var(--fs-sm);font-weight:bold;color:#fff;background:transparent;transition:background .2s;min-height:44px;}
 .ttbtn.away.active{background:var(--red);}.ttbtn.home.active{background:#1565c0;}
 .setup-body{flex:1;background:var(--bg);border-radius:16px 16px 0 0;margin-top:10px;padding:12px;overflow-y:auto;}
-.team-name-input{width:100%;font-size:15px;font-weight:bold;border:2px solid var(--navy2);border-radius:9px;padding:8px 12px;margin-bottom:10px;background:#fff;outline:none;}
+.team-name-input{width:100%;font-size:var(--fs-md);font-weight:bold;border:2px solid var(--navy2);border-radius:9px;padding:8px 12px;margin-bottom:10px;background:#fff;outline:none;}
 .player-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;background:#fff;border-radius:9px;padding:7px 9px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
-.order-badge{background:var(--navy2);color:#fff;border-radius:50%;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;}
-.num-input{width:48px;border:1px solid #ddd;border-radius:7px;padding:8px 4px;font-size:15px;text-align:center;outline:none;}
-.name-input{flex:1;border:1px solid #ddd;border-radius:7px;padding:5px 7px;font-size:15px;outline:none;}
-.pos-select{border:1px solid #ddd;border-radius:7px;padding:8px 6px;font-size:14px;background:#fff;outline:none;min-height:44px;}
-.start-btn{width:100%;background:linear-gradient(135deg,var(--navy2),var(--red));color:#fff;border:none;border-radius:13px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer;}
+.order-badge{background:var(--navy2);color:#fff;border-radius:50%;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:var(--fs-sm);}
+.num-input{width:48px;border:1px solid #ddd;border-radius:7px;padding:8px 4px;font-size:var(--fs-md);text-align:center;outline:none;}
+.name-input{flex:1;border:1px solid #ddd;border-radius:7px;padding:5px 7px;font-size:var(--fs-md);outline:none;}
+.pos-select{border:1px solid #ddd;border-radius:7px;padding:8px 6px;font-size:var(--fs-md);background:#fff;outline:none;min-height:44px;}
+.start-btn{width:100%;background:linear-gradient(135deg,var(--navy2),var(--red));color:#fff;border:none;border-radius:13px;padding:14px;font-size:var(--fs-lg);font-weight:bold;cursor:pointer;min-height:48px;}
 .setup-footer{background:var(--bg);padding:10px 12px 26px;flex-shrink:0;}
-.modal-text-input{width:100%;border:2px solid #ddd;border-radius:9px;padding:10px 12px;font-size:14px;outline:none;font-family:inherit;margin-bottom:6px;}
+.modal-text-input{width:100%;border:2px solid #ddd;border-radius:9px;padding:10px 12px;font-size:var(--fs-md);outline:none;font-family:inherit;margin-bottom:6px;}
 .modal-text-input:focus{border-color:var(--navy2);outline:2px solid var(--navy2);outline-offset:-2px;}
 
 /* ===チュートリアル=== */
 .tut-page{height:100dvh;display:flex;flex-direction:column;background:var(--navy);overflow:hidden;}
 .tut-hdr{padding:14px 16px 10px;color:#fff;flex-shrink:0;}
-.tut-title{font-size:17px;font-weight:bold;margin-bottom:3px;}
-.tut-sub{font-size:11px;opacity:.7;margin-bottom:10px;}
+.tut-title{font-size:var(--fs-lg);font-weight:bold;margin-bottom:3px;}
+.tut-sub{font-size:var(--fs-sm);opacity:.7;margin-bottom:10px;}
 .tut-steps{display:flex;gap:6px;margin-bottom:4px;}
 .tut-step-dot{height:4px;border-radius:2px;flex:1;background:rgba(255,255,255,.2);transition:background .3s;}
 .tut-step-dot.active{background:#ff8a80;}
 .tut-body{flex:1;overflow-y:auto;padding:0 14px 14px;}
 .tut-card{background:#fff;border-radius:16px;overflow:hidden;margin-bottom:14px;}
 .tut-card-top{padding:12px 14px 0;}
-.tut-label{font-size:10px;font-weight:bold;color:#aaa;letter-spacing:.5px;margin-bottom:4px;}
-.tut-situation{font-size:14px;font-weight:bold;color:var(--navy2);margin-bottom:10px;line-height:1.4;}
+.tut-label{font-size:var(--fs-xs);font-weight:bold;color:#aaa;letter-spacing:.5px;margin-bottom:4px;}
+.tut-situation{font-size:var(--fs-md);font-weight:bold;color:var(--navy2);margin-bottom:10px;line-height:1.4;}
 .tut-diamond-row{display:flex;align-items:flex-start;gap:12px;padding:0 14px 12px;}
 .tut-diamond-wrap{background:#f0f8f0;border-radius:10px;padding:8px;flex-shrink:0;}
 .tut-explanation{flex:1;}
 .tut-sym-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-.tut-sym{font-size:20px;font-weight:900;font-family:monospace;padding:3px 10px;border-radius:7px;color:#fff;}
-.tut-sym-desc{font-size:12px;color:#333;font-weight:bold;}
+.tut-sym{font-size:var(--fs-xl);font-weight:900;font-family:monospace;padding:3px 10px;border-radius:7px;color:#fff;}
+.tut-sym-desc{font-size:var(--fs-sm);color:#333;font-weight:bold;}
 .tut-points{list-style:none;padding:0;margin:0;}
-.tut-points li{font-size:11px;color:#555;line-height:1.6;padding-left:12px;position:relative;}
+.tut-points li{font-size:var(--fs-sm);color:var(--gray);line-height:1.6;padding-left:12px;position:relative;}
 .tut-points li::before{content:"▶";position:absolute;left:0;font-size:8px;color:#aaa;top:2px;}
 .tut-rule-box{background:#f8f9fa;margin:0 10px 10px;border-radius:9px;padding:9px 11px;}
 .tut-footer{flex-shrink:0;padding:10px 14px 24px;display:flex;gap:8px;}
-.tut-skip{flex:1;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:11px;padding:12px;font-size:13px;font-weight:bold;cursor:pointer;}
-.tut-next{flex:2;background:#ff8a80;color:#fff;border:none;border-radius:11px;padding:12px;font-size:14px;font-weight:bold;cursor:pointer;}
+.tut-skip{flex:1;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:11px;padding:12px;font-size:var(--fs-sm);font-weight:bold;cursor:pointer;min-height:44px;}
+.tut-next{flex:2;background:#ff8a80;color:#fff;border:none;border-radius:11px;padding:12px;font-size:var(--fs-md);font-weight:bold;cursor:pointer;min-height:44px;}
 
 /* ━━━ アコーディオン ━━━ */
 .result-body-accordion{
@@ -396,15 +406,15 @@ button:focus:not(:focus-visible) { outline: none; }
 .wiz-section{background:#f8fafc;border-radius:12px;padding:12px 12px 10px;margin-bottom:10px;border:1.5px solid #e2e8f0;transition:border-color .2s,background .2s;}
 .wiz-section.wiz-active{border-color:#bfdbfe;background:#f0f7ff;}
 .wiz-section.wiz-done{border-color:#86efac;background:#f0fdf4;}
-.wiz-section-hdr{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:bold;color:#1e3a5f;margin-bottom:9px;line-height:1.3;}
-.wiz-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#1a3a6e;color:#fff;font-size:12px;font-weight:900;flex-shrink:0;}
+.wiz-section-hdr{display:flex;align-items:center;gap:7px;font-size:var(--fs-md);font-weight:bold;color:#1e3a5f;margin-bottom:9px;line-height:1.3;}
+.wiz-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--navy2);color:#fff;font-size:var(--fs-sm);font-weight:bold;flex-shrink:0;}
 .wiz-done .wiz-num{background:#16a34a;}
-.wiz-pos-sub{font-size:10px;font-weight:bold;color:#64748b;letter-spacing:.5px;margin-bottom:4px;}
+.wiz-pos-sub{font-size:var(--fs-xs);font-weight:bold;color:#64748b;letter-spacing:.5px;margin-bottom:4px;}
 /* 守備ボタン選択済み状態 */
 .pos-btn.wiz-selected{outline:3px solid #16a34a;transform:scale(1.08);position:relative;z-index:1;}
 .pos-btn.wiz-selected-err{outline:3px solid #c62828;transform:scale(1.08);position:relative;z-index:1;}
 /* 投球数警告バッジ */
-.pitch-warn-badge{display:inline-block;font-size:10px;font-weight:bold;border-radius:20px;padding:1px 6px;margin-left:5px;vertical-align:middle;}
+.pitch-warn-badge{display:inline-block;font-size:var(--fs-xs);font-weight:bold;border-radius:20px;padding:1px 6px;margin-left:5px;vertical-align:middle;}
 .pitch-warn-y{background:#fef08a;color:#854d0e;}
 .pitch-warn-o{background:#fed7aa;color:#9a3412;}
 .pitch-warn-r{background:#fecaca;color:#7f1d1d;}
@@ -434,6 +444,14 @@ if(!Array.prototype.includes){Array.prototype.includes=function(v){return this.i
 if(!String.prototype.includes){String.prototype.includes=function(s,p){return this.indexOf(s,p)!==-1;};}
 if(!Object.assign){Object.assign=function(t){for(var i=1;i<arguments.length;i++){var s=arguments[i];if(s){for(var k in s){if(Object.prototype.hasOwnProperty.call(s,k))t[k]=s[k];}}}return t;};}
 if(!Object.keys){Object.keys=function(o){var k=[];for(var p in o){if(Object.prototype.hasOwnProperty.call(o,p))k.push(p);}return k;};}
+
+// ============================================================
+// セキュリティ: HTMLエスケープ
+// ============================================================
+function escH(s){
+  if(s==null) return"";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
 
 // ============================================================
 // 定数
@@ -538,55 +556,49 @@ var HELP_DEFS={
 };
 
 var RUNNER_EVENTS=[
-  {code:"SB",     label:"盗塁",     sub:"走者が走った",  bg:"#1b5e20"},
-  {code:"DS",     label:"重盗",     sub:"2人同時",      bg:"#1b5e20"},
-  {code:"TS",     label:"三重盗",   sub:"3人同時",      bg:"#1b5e20"},
-  {code:"CS",     label:"盗塁失敗", sub:"刺されてアウト",bg:"#c62828"},
-  {code:"PO",     label:"牽制アウト",sub:"牽制でアウト", bg:"#c62828"},
-  {code:"POE",    label:"牽制エラー",sub:"エラーで走者進む",bg:"#e65100"},
-  {code:"ROUT",   label:"走塁死",   sub:"進みすぎた",   bg:"#c62828"},
-  {code:"RUNDOWN",label:"挟殺",     sub:"挟まれてアウト",bg:"#c62828"},
-  {code:"WP",     label:"暴投",     sub:"投球が逸れた",  bg:"#283593"},
-  {code:"PB",     label:"捕逸",     sub:"捕手が逸らした",bg:"#283593"},
-  {code:"BALK",   label:"ボーク",   sub:"全走者1つ進む", bg:"#283593"},
-  {code:"SCORE",  label:"得点追加", sub:"手動で追加",    bg:"#c62828"}
+  // 色ルール: 緑=走者に嬉しい(進塁)、赤灰=悲しい(アウト)
+  {code:"SB",     label:"盗塁",     sub:"走者が走った",  bg:"#2e7d32"},
+  {code:"DS",     label:"重盗",     sub:"2人同時",      bg:"#2e7d32"},
+  {code:"TS",     label:"三重盗",   sub:"3人同時",      bg:"#2e7d32"},
+  {code:"CS",     label:"盗塁失敗", sub:"刺されてアウト",bg:"#546e7a"},
+  {code:"PO",     label:"牽制アウト",sub:"牽制でアウト", bg:"#546e7a"},
+  {code:"POE",    label:"牽制エラー",sub:"エラーで走者進む",bg:"#00796b"},
+  {code:"ROUT",   label:"走塁死",   sub:"進みすぎた",   bg:"#546e7a"},
+  {code:"RUNDOWN",label:"挟殺",     sub:"挟まれてアウト",bg:"#546e7a"},
+  {code:"WP",     label:"暴投",     sub:"投球が逸れた",  bg:"#00796b"},
+  {code:"PB",     label:"捕逸",     sub:"捕手が逸らした",bg:"#00796b"},
+  {code:"BALK",   label:"ボーク",   sub:"全走者1つ進む", bg:"#00796b"},
+  {code:"SCORE",  label:"得点追加", sub:"手動で追加",    bg:"#2e7d32"}
 ];
 
 var RESULT_GROUPS={
   // ※ K/SK/BB/HBP/KWP は①投球入力から自動判定 → ②には表示しない
   // ※ K3B（3バント三振）も①で自動判定 → ②には表示しない
 
-  // ─── アウト ───
-  out:[
-    {code:"GO",  label:"ゴロ",       sub:"ゴロでアウト",  color:"#455a64",wiz:true},
-    {code:"FO",  label:"フライ",     sub:"フライでアウト",color:"#455a64",wiz:true},
-    {code:"LO",  label:"ライナー",   sub:"直線打でアウト",color:"#455a64",wiz:true},
-    {code:"IFF", label:"内野フライ", sub:"自動アウト",    color:"#455a64",wiz:true},
-    {code:"SAC", label:"送りバント", sub:"走者を進める",  color:"#455a64",wiz:true},
-    {code:"SQ",  label:"スクイズ",   sub:"3塁走者を生還", color:"#455a64",wiz:true},
-    {code:"SQE", label:"スクイズ失敗",sub:"同時に2アウト",color:"#455a64"},
-    {code:"SF",  label:"犠牲フライ", sub:"3塁走者生還",  color:"#455a64",wiz:true},
-    {code:"DP",  label:"ゲッツー",   sub:"2人同時アウト", color:"#455a64",wiz:true},
-    {code:"K3B", label:"3バント三振",sub:"バントで3ストライク",    color:"#455a64"}
-  ],
-
-  // ─── ヒット ───
-  hit:[
-    {code:"1H",  label:"ヒット",      sub:"1塁へ",    color:"#388e3c",wiz:true},
-    {code:"2H",  label:"二塁打",      sub:"2塁へ",    color:"#2e7d32",wiz:true},
-    {code:"3H",  label:"三塁打",      sub:"3塁へ",    color:"#1b5e20",wiz:true},
-    {code:"HR",  label:"ホームラン",  sub:"1周して得点",color:"#b71c1c"},
-    {code:"RH",  label:"ランニングHR",sub:"走り抜け",  color:"#c62828"},
-    {code:"BH",  label:"バントヒット",sub:"バント安打", color:"#558b2f",wiz:true}
-  ],
-
-  // ─── 出塁（ヒット以外）───
+  // ─── 出塁（ヒット＋その他を統合）───
+  // ※ 「ヒット」ボタンはモーダルで1H/2H/3Hを選択
+  // 色ルール: 全て緑系（出塁＝打者に嬉しい）。安打は濃い緑、その他は青緑
   reach:[
-    {code:"E",   label:"エラーで出塁",sub:"守備ミス",   color:"#0277bd",wiz:true},
-    {code:"FC",  label:"野選で出塁",  sub:"守備の選択", color:"#0277bd",wiz:true},
-    {code:"SACE",label:"バントエラー出塁",sub:"ミスで打者が出塁",  color:"#0277bd",wiz:true},
-    {code:"CI",  label:"打撃妨害",    sub:"捕手のミス", color:"#0277bd"},
-    {code:"OBI", label:"走塁妨害",    sub:"野手のミス", color:"#0277bd"}
+    {code:"HIT_SELECT",label:"ヒット",sub:"安打で出塁",color:"#2e7d32"},
+    {code:"HR",  label:"ホームラン",  sub:"1周して得点",color:"#1b5e20"},
+    {code:"BH",  label:"バントヒット",sub:"バント安打", color:"#388e3c",wiz:true},
+    {code:"E",   label:"エラー出塁",  sub:"守備ミス",   color:"#00796b",wiz:true},
+    {code:"FC",  label:"野選で出塁",  sub:"守備の選択", color:"#00796b",wiz:true},
+    {code:"SACE",label:"バントエラー",sub:"ミスで出塁", color:"#00796b",wiz:true},
+    {code:"CI",  label:"打撃妨害",    sub:"捕手のミス", color:"#00796b"},
+    {code:"OBI", label:"走塁妨害",    sub:"野手のミス", color:"#00796b"}
+  ],
+
+  // ─── アウト ───
+  // 色ルール: 全て同じスレート（アウト＝打者に悲しい）
+  out:[
+    {code:"GO",  label:"ゴロ",       sub:"ゴロでアウト",  color:"#546e7a",wiz:true},
+    {code:"FO",  label:"フライ",     sub:"フライでアウト",color:"#546e7a",wiz:true},
+    {code:"LO",  label:"ライナー",   sub:"直線打でアウト",color:"#546e7a",wiz:true},
+    {code:"SAC", label:"送りバント", sub:"走者を進める",  color:"#546e7a",wiz:true},
+    {code:"SQ",  label:"スクイズ",   sub:"3塁走者を生還", color:"#546e7a",wiz:true},
+    {code:"SF",  label:"犠牲フライ", sub:"3塁走者生還",  color:"#546e7a",wiz:true},
+    {code:"DP",  label:"ゲッツー",   sub:"2人同時アウト", color:"#546e7a",wiz:true}
   ]
 };
 
@@ -608,6 +620,9 @@ function getResultAvailability(code){
   strikes=Math.min(strikes,2);
 
   switch(code){
+
+    // ── ヒット選択（常にOK）──
+    case "HIT_SELECT": return"ok";
 
     // ── ゴロ / フライ / ライナー ── 常に起こり得る
     case "GO": case "FO": case "LO": return"ok";
@@ -878,7 +893,7 @@ function initState(){
     curSide:"top", curInning:0,
     curPitches:[], curBases:[], outs:0,
     runnerInfo:{},
-    tab:"input", resultTab:"hit",
+    tab:"input", resultTab:"reach",
     autoMsg:null, modal:null,
     sbFilter:"all", sbSubTab:"log", _pendingChange:false, runnerOpen:false, pendingRunnerEvents:[],
     tutorialExamples:null, tutorialStep:0,
@@ -3133,7 +3148,8 @@ function loadFromStorage(){
     S.tab        = data.tab||"input";
     S.sbSubTab   = data.sbSubTab||"log";
     S.sbFilter   = data.sbFilter||"all";
-    S.resultTab  = data.resultTab||"hit";
+    S.resultTab  = data.resultTab||"reach";
+    if(S.resultTab==="hit"||S.resultTab==="special") S.resultTab="reach";
     S._pendingChange = data._pendingChange||false;
     S.pendingOrders  = data.pendingOrders||[];
     S.pitchers   = data.pitchers||{top:[],bottom:[]};
@@ -3213,8 +3229,8 @@ function renderSetup(){
   var rows=team.players.map(function(p,i){
     return'<div class="player-row">'+
       '<span class="order-badge">'+p.order+'</span>'+
-      '<input class="num-input" type="number" inputmode="numeric" placeholder="#" aria-label="'+p.order+'番打者の背番号" value="'+p.number+'" data-field="number" data-idx="'+i+'" data-side="'+s+'">'+
-      '<input class="name-input" type="text" placeholder="選手名" aria-label="'+p.order+'番打者の名前" value="'+p.name+'" data-field="name" data-idx="'+i+'" data-side="'+s+'">'+
+      '<input class="num-input" type="number" inputmode="numeric" placeholder="#" aria-label="'+p.order+'番打者の背番号" value="'+escH(p.number)+'" data-field="number" data-idx="'+i+'" data-side="'+s+'">'+
+      '<input class="name-input" type="text" placeholder="選手名" aria-label="'+p.order+'番打者の名前" value="'+escH(p.name)+'" data-field="name" data-idx="'+i+'" data-side="'+s+'">'+
       '<select class="pos-select" aria-label="'+p.order+'番打者のポジション" data-field="position" data-idx="'+i+'" data-side="'+s+'">'+
         POS_OPTIONS.map(function(n){return'<option value="'+n+'"'+(p.position===n?" selected":"")+'>'+POSITIONS[n]+'</option>';}).join("")+
       '</select></div>';
@@ -3222,21 +3238,21 @@ function renderSetup(){
   var meta=S.meta||{};
   var todayStr=meta.date||(function(){var d=new Date();return d.getFullYear()+"-"+(d.getMonth()<9?"0":"")+(d.getMonth()+1)+"-"+(d.getDate()<10?"0":"")+d.getDate();})();
   var metaSection='<div style="background:#eef1f6;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid #dde0e6;">'+
-    '<div style="font-size:11px;color:#666;font-weight:bold;margin-bottom:8px;letter-spacing:.5px">試合情報（任意）</div>'+
+    '<div style="font-size:12px;color:#666;font-weight:bold;margin-bottom:8px;letter-spacing:.5px">試合情報（任意）</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'+
       '<input type="date" id="metaDate" value="'+todayStr+'" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
-      '<input type="text" id="metaTournament" value="'+(meta.tournament||"")+'" placeholder="大会・試合名" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
-      '<input type="text" id="metaVenue" value="'+(meta.venue||"")+'" placeholder="球場・グラウンド名" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
+      '<input type="text" id="metaTournament" value="'+escH(meta.tournament||"")+'" placeholder="大会・試合名" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
+      '<input type="text" id="metaVenue" value="'+escH(meta.venue||"")+'" placeholder="球場・グラウンド名" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
       '<select id="metaWeather" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:7px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
         ['','晴れ☀️','曇り☁️','雨🌧️','強風💨'].map(function(w){return'<option value="'+w+'"'+(meta.weather===w?' selected':'')+'>'+( w||'天気を選択')+'</option>';}).join('')+
       '</select>'+
     '</div>'+
     '<div style="margin-top:8px;">'+
-      '<div style="font-size:11px;color:#666;margin-bottom:4px;">イニング数</div>'+
+      '<div style="font-size:12px;color:#666;margin-bottom:4px;">イニング数</div>'+
       '<div style="display:flex;gap:6px;">'+
         [5,6,7,9].map(function(n){
           var sel=(S.maxInnings||5)===n;
-          return'<button type="button" id="maxInn'+n+'" style="flex:1;padding:7px 4px;border-radius:7px;border:2px solid '+(sel?'#1a3a6e':'#bbb')+';background:'+(sel?'#1a3a6e':'#fff')+';color:'+(sel?'#fff':'#333')+';font-size:13px;font-weight:'+(sel?'bold':'normal')+';cursor:pointer;">'+n+'回</button>';
+          return'<button type="button" id="maxInn'+n+'" style="flex:1;padding:7px 4px;border-radius:7px;border:2px solid '+(sel?'#1a3a6e':'#bbb')+';background:'+(sel?'#1a3a6e':'#fff')+';color:'+(sel?'#fff':'#333')+';font-size:12px;font-weight:'+(sel?'bold':'normal')+';cursor:pointer;">'+n+'回</button>';
         }).join('')+
       '</div>'+
     '</div>'+
@@ -3245,7 +3261,7 @@ function renderSetup(){
       return'<div style="margin-top:8px;border-top:1px solid #dde0e6;padding-top:8px;">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
           '<div>'+
-            '<span style="font-size:11px;color:#555;">タイブレーク（延長戦）</span>'+
+            '<span style="font-size:12px;color:#555;">タイブレーク（延長戦）</span>'+
             '<div style="font-size:10px;color:#999;margin-top:1px">延長から2塁走者スタート</div>'+
           '</div>'+
           '<button type="button" id="tiebreakerToggle" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(tb.enabled?'#1a3a6e':'#bbb')+';background:'+(tb.enabled?'#1a3a6e':'#fff')+';color:'+(tb.enabled?'#fff':'#555')+';font-size:12px;font-weight:bold;cursor:pointer;">'+(tb.enabled?'✓ 有効':'無効')+'</button>'+
@@ -3256,11 +3272,11 @@ function renderSetup(){
       var cg=S.coldGame||{enabled:false,runs:10,fromInning:3};
       return'<div style="margin-top:4px;border-top:1px solid #dde0e6;padding-top:8px;">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
-          '<span style="font-size:11px;color:#555;">コールドゲーム</span>'+
+          '<span style="font-size:12px;color:#555;">コールドゲーム</span>'+
           '<button type="button" id="coldGameToggle" style="padding:4px 12px;border-radius:20px;border:1.5px solid '+(cg.enabled?'#1a3a6e':'#bbb')+';background:'+(cg.enabled?'#1a3a6e':'#fff')+';color:'+(cg.enabled?'#fff':'#555')+';font-size:12px;font-weight:bold;cursor:pointer;">'+(cg.enabled?'✓ 有効':'無効')+'</button>'+
         '</div>'+
         (cg.enabled?
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:#555;">'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:#555;">'+
             '<div>'+
               '<div style="margin-bottom:3px">点差</div>'+
               '<select id="coldRunsDiff" style="background:#fff;border:1.5px solid #ccc;border-radius:7px;padding:6px 8px;color:#333;font-size:12px;width:100%;box-sizing:border-box;">'+
@@ -3280,14 +3296,14 @@ function renderSetup(){
   '</div>';
   return'<div class="setup-page">'+
     '<div class="setup-hdr"><div class="setup-title">⚾ スコア記録アプリ</div>'+
-    '<div style="font-size:11px;color:rgba(255,255,255,.7);text-align:center;margin-bottom:8px;padding:0 4px">チーム名と選手名を確認して「試合開始」を押してください</div>'+
+    '<div style="font-size:12px;color:rgba(255,255,255,.7);text-align:center;margin-bottom:8px;padding:0 4px">チーム名と選手名を確認して「試合開始」を押してください</div>'+
       '<div class="team-toggle">'+
         '<button class="ttbtn away'+(s==="away"?" active":"")+'" data-side="away">先攻チーム</button>'+
         '<button class="ttbtn home'+(s==="home"?" active":"")+'" data-side="home">後攻チーム</button>'+
       '</div></div>'+
-    '<div class="setup-body">'+metaSection+'<input class="team-name-input" type="text" placeholder="チーム名" aria-label="チーム名" value="'+team.name+'" data-field="teamname" data-side="'+s+'">'+rows+'</div>'+
-    '<div class="setup-footer"><div style="font-size:11px;color:#888;text-align:center;margin-bottom:8px;padding:0 4px">選手名・背番号は試合中でも変更できます</div><button class="start-btn" id="startBtn">⚾ 試合開始！</button>'+
-    '<button id="resetDataBtn" style="width:100%;margin-top:8px;background:none;border:1.5px solid #e53935;color:#e53935;border-radius:9px;padding:9px;font-size:13px;font-weight:bold;cursor:pointer;">🗑 データをリセット（記録を全て消去）</button></div>'+
+    '<div class="setup-body">'+metaSection+'<input class="team-name-input" type="text" placeholder="チーム名" aria-label="チーム名" value="'+escH(team.name)+'" data-field="teamname" data-side="'+s+'">'+rows+'</div>'+
+    '<div class="setup-footer"><div style="font-size:12px;color:#888;text-align:center;margin-bottom:8px;padding:0 4px">選手名・背番号は試合中でも変更できます</div><button class="start-btn" id="startBtn">⚾ 試合開始！</button>'+
+    '<button id="resetDataBtn" style="width:100%;margin-top:8px;background:none;border:1.5px solid #e53935;color:#e53935;border-radius:9px;padding:9px;font-size:12px;font-weight:bold;cursor:pointer;">🗑 データをリセット（記録を全て消去）</button></div>'+
   '</div>';
 }
 
@@ -3314,7 +3330,7 @@ function renderTutorial(){
       '<div class="tut-diamond-row">'+
         '<div class="tut-diamond-wrap">'+diamond+
           (ex.pitches&&ex.pitches.length>0?'<div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:5px">'+pitchSyms+'</div>':"")+
-          '<div style="font-size:9px;color:#aaa;text-align:center;margin-top:4px">スコアブック記入例</div>'+
+          '<div style="font-size:10px;color:#aaa;text-align:center;margin-top:4px">スコアブック記入例</div>'+
         '</div>'+
         '<div class="tut-explanation">'+
           '<div class="tut-sym-row"><span class="tut-sym" style="background:'+ex.sym.color+'">'+ex.sym.sym+'</span><span class="tut-sym-desc">'+ex.sym.desc+'</span></div>'+
@@ -3344,7 +3360,7 @@ function renderTutorialEnd(){
     '<div style="text-align:center;padding:30px 20px;color:#fff;">'+
       '<div style="font-size:48px;margin-bottom:12px">⚾</div>'+
       '<div style="font-size:20px;font-weight:bold;margin-bottom:8px">準備完了！</div>'+
-      '<div style="font-size:13px;opacity:.75;margin-bottom:28px;line-height:1.6">スコアの読み方を確認しました。<br>いつでもスコアブックタブで確認できます。</div>'+
+      '<div style="font-size:12px;opacity:.75;margin-bottom:28px;line-height:1.6">スコアの読み方を確認しました。<br>いつでもスコアブックタブで確認できます。</div>'+
       '<button id="tutFinish" style="background:linear-gradient(135deg,#ff8a80,#e53935);color:#fff;border:none;border-radius:14px;padding:16px 40px;font-size:16px;font-weight:bold;cursor:pointer;">⚾ 試合開始！</button>'+
     '</div></div>';
 }
@@ -3393,11 +3409,12 @@ function renderGame(){
   else if(S.tab==="scorebook")content=renderScorebook();
   else if(S.tab==="pitchers")content=renderPitchers();
   else if(S.tab==="stats")content=renderBattingStats();
+  else if(S.tab==="help")content=renderHelp();
   else content=renderLog();
   // ピッチシーケンス（最新6球まで表示）
   var recentPitches=S.curPitches.slice(-6);
   var pitchSeqHtml=recentPitches.length===0
-    ?'<span style="font-size:11px;color:#999">投球なし</span>'
+    ?'<span style="font-size:12px;color:#999">投球なし</span>'
     :recentPitches.map(function(c){return pitchSvg(c,13);}).join("");
 
   var p=curPlayer();
@@ -3418,7 +3435,7 @@ function renderGame(){
       '<div class="footer-batter">'+
         '<div id="footerDiamondBtn" style="cursor:pointer;flex-shrink:0" title="走者を修正">'+smallDiamondSvg(S.curBases,44)+'</div>'+
         '<div class="footer-batter-info">'+
-          '<div class="footer-batter-name">#'+pNum+' '+pName+
+          '<div class="footer-batter-name">#'+escH(pNum)+' '+escH(pName)+
             ((S.pendingOrders&&S.pendingOrders.length>0)?
               '<span style="background:#e65100;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:bold;margin-left:6px">'+S.pendingOrders.length+'件空欄</span>':"")+
           '</div>'+
@@ -3430,7 +3447,7 @@ function renderGame(){
             var nextName=nextP?(nextP.number?"#"+nextP.number+" ":"")+nextP.name:"";
             var livePitchCount=(pt.pitchCount||0)+(S.curPitches?S.curPitches.length:0);
             var pitcherLine=pt
-              ?'<div class="footer-batter-sub" style="color:rgba(255,255,255,.7);display:flex;align-items:center;gap:3px;flex-wrap:wrap">投手 '+(pt.number?"#"+pt.number+" ":"")+pt.name+' '+pitchWarnBadge(livePitchCount)+(!(livePitchCount>=60)?'<span style="font-size:11px;opacity:.7">'+livePitchCount+'球</span>':'')+'</div>'
+              ?'<div class="footer-batter-sub" style="color:rgba(255,255,255,.7);display:flex;align-items:center;gap:3px;flex-wrap:wrap">投手 '+(pt.number?"#"+escH(pt.number)+" ":"")+escH(pt.name)+' '+pitchWarnBadge(livePitchCount)+(!(livePitchCount>=60)?'<span style="font-size:12px;opacity:.7">'+livePitchCount+'球</span>':'')+'</div>'
               :'<div class="footer-batter-sub" style="color:rgba(255,255,255,.6)">'+pPos+' '+(curOrder()+1)+'番打者</div>';
             var deckLine=nextName?'<div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:1px">次打者: '+nextName+'</div>':'';
             return pitcherLine+deckLine;
@@ -3448,12 +3465,12 @@ function renderGame(){
       // スコア
       '<div class="footer-score">'+
         '<div class="footer-score-team'+(isTop?" batting":"")+'">'+
-          '<div class="footer-score-name">'+S.awayTeam.name+'</div>'+
+          '<div class="footer-score-name">'+escH(S.awayTeam.name)+'</div>'+
           '<div class="footer-score-num away">'+totalScore("top")+'</div>'+
         '</div>'+
         '<div class="footer-score-sep">:</div>'+
         '<div class="footer-score-team'+(!isTop?" batting":"")+'">'+
-          '<div class="footer-score-name">'+S.homeTeam.name+'</div>'+
+          '<div class="footer-score-name">'+escH(S.homeTeam.name)+'</div>'+
           '<div class="footer-score-num home">'+totalScore("bottom")+'</div>'+
         '</div>'+
       '</div>'+
@@ -3466,7 +3483,7 @@ function renderGame(){
     '</div>'+
     // ── タブ ──
     '<div class="tabs" role="navigation" aria-label="画面切り替え">'+
-      [["input","入力"],["scoreboard","得点表"],["scorebook","スコア"],["pitchers","投手"],["stats","成績"],["log","記録"]].map(function(t){
+      [["input","入力"],["scoreboard","得点表"],["scorebook","スコア"],["pitchers","投手"],["stats","成績"],["log","記録"],["help","ヘルプ"]].map(function(t){
         return'<button class="tab-btn'+(S.tab===t[0]?" active":"")+'" data-tab="'+t[0]+'" role="tab" aria-selected="'+(S.tab===t[0]?'true':'false')+'">'+t[1]+'</button>';
       }).join("")+
     '</div></div>';
@@ -3494,11 +3511,11 @@ function renderGame(){
       });
     }
     var skipGuideBtn=_skipable
-      ? '<button id="skipBatterBtn" style="flex-shrink:0;margin-left:8px;background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.7);color:#fff;border-radius:6px;padding:4px 12px;font-size:11px;font-weight:bold;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">'+
-          '⏭ 後で入力'+(_pc>0?'<span style="background:#fff;color:#e65100;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;">'+_pc+'</span>':'')+
+      ? '<button id="skipBatterBtn" style="flex-shrink:0;margin-left:8px;background:rgba(255,255,255,.25);border:1.5px solid rgba(255,255,255,.7);color:#fff;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">'+
+          '⏭ 後で入力'+(_pc>0?'<span style="background:#fff;color:#e65100;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;">'+_pc+'</span>':'')+
         '</button>'
       : '';
-    guideBar='<div id="guideBarEl" style="background:'+gc+';color:#fff;padding:5px 10px;font-size:13px;font-weight:bold;display:flex;align-items:center;flex-shrink:0;">'+
+    guideBar='<div id="guideBarEl" style="background:'+gc+';color:#fff;padding:5px 10px;font-size:12px;font-weight:bold;display:flex;align-items:center;flex-shrink:0;">'+
       '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.1px;">'+gt+'</span>'+
       skipGuideBtn+
     '</div>';
@@ -3528,9 +3545,9 @@ function renderInputTab(){
     var _editSub=_isExisting?'修正が終わると通常モードに戻ります':'記録が終わると通常モードに戻ります';
     editingBanner='<div style="background:'+(_isExisting?'#6a1b9a':'#e65100')+';color:#fff;border-radius:9px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;" role="alert" aria-live="polite">'+
       '<div>'+
-        '<div style="font-size:11px;opacity:.9;margin-bottom:1px">'+_editTitle+'</div>'+
-        '<div style="font-size:15px;font-weight:bold">'+(S.curInning+1)+'回 '+S.editingSlot.order+'番 #'+_esNum+' '+_esName+(_isExisting?' の打席を修正':'を記録中')+'</div>'+
-        '<div style="font-size:11px;opacity:.85;margin-top:2px">'+_editSub+'</div>'+
+        '<div style="font-size:12px;opacity:.9;margin-bottom:1px">'+_editTitle+'</div>'+
+        '<div style="font-size:14px;font-weight:bold">'+(S.curInning+1)+'回 '+S.editingSlot.order+'番 #'+_esNum+' '+_esName+(_isExisting?' の打席を修正':'を記録中')+'</div>'+
+        '<div style="font-size:12px;opacity:.85;margin-top:2px">'+_editSub+'</div>'+
       '</div>'+
       '<button id="cancelEditSlotBtn" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:7px;padding:8px 12px;font-size:12px;font-weight:bold;cursor:pointer;flex-shrink:0">✕ キャンセル</button>'+
     '</div>';
@@ -3572,7 +3589,7 @@ function renderInputTab(){
     '</button>';
   }).join("");
   // specialタブが選択中だったらoutにリセット
-  if(S.resultTab==="special") S.resultTab="hit";
+  if(S.resultTab==="special"||S.resultTab==="hit") S.resultTab="reach";
   var grpBtns=(RESULT_GROUPS[S.resultTab]||[]).map(function(btn){
     var avail=getResultAvailability(btn.code);
     var stateCls=avail==="impossible"?" unavailable":avail==="unlikely"?" unlikely":"";
@@ -3625,7 +3642,7 @@ function renderInputTab(){
         '<span class="step-badge">①</span>'+
         '<span>投球</span>'+
         (S.curPitches.length>0?
-          '<span style="font-size:11px;color:#1565c0;margin-left:4px;font-weight:bold;background:#e8f0fe;border-radius:10px;padding:1px 7px;">'+S.curPitches.length+'球</span>':
+          '<span style="font-size:12px;color:#1565c0;margin-left:4px;font-weight:bold;background:#e8f0fe;border-radius:10px;padding:1px 7px;">'+S.curPitches.length+'球</span>':
           '<span style="font-size:10px;color:#aaa;margin-left:4px;font-weight:normal">1球ごとにタップ</span>')+
         '<button class="help-btn" id="helpPitchBtn" style="margin-left:auto">?</button>'+
       '</div>'+
@@ -3635,7 +3652,7 @@ function renderInputTab(){
     // ── セクション②③ 打席結果 + 走者イベント（アコーディオン版） ──
     '<div class="result-card" style="'+(noPitchYet||waitingChange?'opacity:.4;pointer-events:none;':'')+'">'+
       // ヘッダー行
-      '<div style="background:#f0f4f8;padding:4px 10px;font-size:11px;color:#555;display:flex;align-items:center;gap:6px;border-bottom:1px solid #e8eaed;">'+
+      '<div style="background:#f0f4f8;padding:4px 10px;font-size:12px;color:#555;display:flex;align-items:center;gap:6px;border-bottom:1px solid #e8eaed;">'+
         '<span style="font-weight:bold;color:#1a3a6e;font-size:12px">② 打球の結果</span>'+
         '<button class="help-btn" id="helpResultBtn" style="margin-left:auto">?</button>'+
       '</div>'+
@@ -3644,9 +3661,8 @@ function renderInputTab(){
         // タブをカラーで視覚的に明示、アクティブでない時も色付き
         (function(){
           var tabs=[
-            {id:"hit",   label:"◎ ヒット", desc:"打って塁に出た",     activeColor:"#2e7d32", inactiveColor:"#e8f5e9", inactiveFg:"#2e7d32"},
-            {id:"reach", label:"○ 出塁",   desc:"ミスや妨害で出塁",   activeColor:"#0277bd", inactiveColor:"#e3f2fd", inactiveFg:"#0277bd"},
-            {id:"out",   label:"✕ アウト", desc:"打者がアウト",       activeColor:"#455a64", inactiveColor:"#e0e2e5", inactiveFg:"#37474f"}
+            {id:"reach", label:"○ 出塁",   desc:"塁に出た（安打・エラー等）", activeColor:"#2e7d32", inactiveColor:"#e8f5e9", inactiveFg:"#2e7d32"},
+            {id:"out",   label:"✕ アウト", desc:"打者がアウト",              activeColor:"#455a64", inactiveColor:"#e0e2e5", inactiveFg:"#37474f"}
           ];
           return tabs.map(function(t){
             var isActive=S.resultTab===t.id;
@@ -3657,10 +3673,10 @@ function renderInputTab(){
             return'<button class="result-tab'+ac+'" data-rtab="'+t.id+'" style="'+
               'background:'+bg+';color:'+fg+';border:'+border+';'+
               'padding:7px 4px;flex:1;border-radius:0;transition:all .15s;'+
-              (isActive?'font-weight:900;':'')+
+              (isActive?'font-weight:bold;':'')+
               '">'+
               '<span style="display:block;font-size:12px;font-weight:bold;white-space:nowrap">'+t.label+'</span>'+
-              '<span style="display:block;font-size:9px;margin-top:2px;opacity:'+(isActive?.9:.7)+';font-weight:normal;white-space:nowrap">'+
+              '<span style="display:block;font-size:10px;margin-top:2px;opacity:'+(isActive?.9:.7)+';font-weight:normal;white-space:nowrap">'+
                 t.desc+
               '</span>'+
             '</button>';
@@ -3676,7 +3692,7 @@ function renderInputTab(){
       '<div class="card-label" style="padding:7px 10px;margin:0;background:'+(hasRunners?'#f1f8f0':'#fafafa')+';border-bottom:1px solid #e8eaed;display:flex;align-items:center;justify-content:space-between;">'+
         '<div style="display:flex;align-items:center;gap:6px;">'+
           '<span class="step-badge" style="background:'+(hasRunners?'#388e3c':'#9e9e9e')+'">③</span>'+
-          '<span style="font-weight:bold;font-size:13px;color:'+(hasRunners?'#1b5e20':'#555')+'">走者のイベント</span>'+
+          '<span style="font-weight:bold;font-size:12px;color:'+(hasRunners?'#1b5e20':'#555')+'">走者のイベント</span>'+
           (hasRunners?'<span style="background:#c8e6c9;color:#1b5e20;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:bold">走者あり</span>':'<span style="font-size:10px;color:#aaa">走者がいるとき使う</span>')+
         '</div>'+
         '<button class="help-btn" id="helpRunnerBtn">?</button>'+
@@ -3985,6 +4001,30 @@ function renderModal(){
   if(!m)return"";
   var type=m.type||"";
 
+  // ── ヒット塁数選択モーダル ──
+  if(type==="hit_select"){
+    return '<div class="modal-overlay" id="modalOverlay">'+
+      '<div class="modal-sheet" style="padding:18px 16px 14px;">'+
+        '<div class="modal-title">ヒット — 何塁打？</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">'+
+          '<button class="rbtn" data-hit-sel="1H" style="background:#2e7d32;min-height:64px;">'+
+            '<span class="rbtn-main" style="font-size:18px">シングル</span>'+
+            '<span class="rbtn-sub">1塁へ</span>'+
+          '</button>'+
+          '<button class="rbtn" data-hit-sel="2H" style="background:#2e7d32;min-height:64px;">'+
+            '<span class="rbtn-main" style="font-size:18px">二塁打</span>'+
+            '<span class="rbtn-sub">2塁へ</span>'+
+          '</button>'+
+          '<button class="rbtn" data-hit-sel="3H" style="background:#2e7d32;min-height:64px;">'+
+            '<span class="rbtn-main" style="font-size:18px">三塁打</span>'+
+            '<span class="rbtn-sub">3塁へ</span>'+
+          '</button>'+
+        '</div>'+
+        '<button class="modal-cancel" id="modalCancel">キャンセル</button>'+
+      '</div>'+
+    '</div>';
+  }
+
   // ── 走者進塁確認ウィザード ──
   if(type==="runner_move_confirm"){
     var rm=m;
@@ -4030,8 +4070,8 @@ function renderModal(){
       var whoName2=aod.base===0?"打者":{1:"一塁走者",2:"二塁走者",3:"三塁走者"}[aod.base]||"走者";
       var defPos2=POS_OPTIONS.map(function(n){
         return'<button class="rm-out-pos" data-base="'+aod.base+'" data-atbase="'+aod.atBase+'" data-defnum="'+n+          '" style="background:'+POS_COLORS[n]+';color:#fff;border:none;border-radius:9px;padding:10px 4px;font-weight:bold;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;">'+
-          '<span style="font-size:18px;font-weight:900">'+n+'</span>'+
-          '<span style="font-size:9px;opacity:.9">'+POSITIONS[n]+'</span>'+
+          '<span style="font-size:18px;font-weight:bold">'+n+'</span>'+
+          '<span style="font-size:10px;opacity:.9">'+POSITIONS[n]+'</span>'+
         '</button>';
       }).join("");
       return'<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true"><div class="modal-sheet">'+
@@ -4191,7 +4231,7 @@ function renderModal(){
             '<span style="background:#fff;color:#555;font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid #ccc">'+scoreStr+'</span>'+
           '</div>'+
           '<div style="font-size:11px;color:#888;margin-bottom:4px">打席結果：<strong style="color:#1a3a6e">'+rm.sym.sym+'</strong>　<span style="color:#555">'+rm.sym.desc+'</span></div>'+
-          '<div style="font-size:17px;font-weight:bold;color:#1a3a6e">'+bName+'はどうなった？</div>'+
+          '<div style="font-size:16px;font-weight:bold;color:#1a3a6e">'+bName+'はどうなった？</div>'+
           (base===0?'<div style="font-size:12px;color:#1565c0;margin-top:5px;line-height:1.5">通常は「1塁に止まった」を選べばOK</div>':'')+
         '</div>';
       })()+
@@ -4219,7 +4259,7 @@ function renderModal(){
     var adv=getSituationAdvice(code_c);
     // ボタンのラベルを取得
     var btnLabel=(function(){
-      var grp=[].concat.apply([],[RESULT_GROUPS.out,RESULT_GROUPS.hit,RESULT_GROUPS.reach]).find(function(b){return b.code===code_c;});
+      var grp=[].concat.apply([],[RESULT_GROUPS.out,RESULT_GROUPS.reach]).find(function(b){return b.code===code_c;});
       if(grp)return grp.label;
       var re=RUNNER_EVENTS.find(function(e){return e.code===code_c;});
       if(re)return re.label;
@@ -4504,8 +4544,8 @@ function renderModal(){
     var rows=team.players.map(function(p,i){
       return'<div class="player-row">'+
         '<span class="order-badge" style="min-width:24px;height:24px;font-size:11px">'+p.order+'</span>'+
-        '<input class="num-input" type="number" inputmode="numeric" placeholder="#" aria-label="'+p.order+'番打者の背番号" value="'+p.number+'" data-field="number" data-idx="'+i+'" data-side="'+s+'" style="width:38px;font-size:12px">'+
-        '<input class="name-input" type="text" placeholder="選手名" aria-label="'+p.order+'番打者の名前" value="'+p.name+'" data-field="name" data-idx="'+i+'" data-side="'+s+'" style="font-size:12px">'+
+        '<input class="num-input" type="number" inputmode="numeric" placeholder="#" aria-label="'+p.order+'番打者の背番号" value="'+escH(p.number)+'" data-field="number" data-idx="'+i+'" data-side="'+s+'" style="width:38px;font-size:12px">'+
+        '<input class="name-input" type="text" placeholder="選手名" aria-label="'+p.order+'番打者の名前" value="'+escH(p.name)+'" data-field="name" data-idx="'+i+'" data-side="'+s+'" style="font-size:12px">'+
         '<select class="pos-select" aria-label="'+p.order+'番打者のポジション" data-field="position" data-idx="'+i+'" data-side="'+s+'" style="font-size:11px">'+
           POS_OPTIONS.map(function(n){return'<option value="'+n+'"'+(p.position===n?" selected":"")+'>'+POSITIONS[n]+'</option>';}).join("")+
         '</select></div>';
@@ -4513,10 +4553,10 @@ function renderModal(){
     return'<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="メンバー編集"><div class="modal-sheet" style="max-height:90vh">'+
       '<div class="modal-title">👥 メンバー編集</div>'+
       '<div style="display:flex;gap:6px;margin-bottom:10px;">'+
-        '<button style="flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;background:'+(s==="away"?"#e53935":"#eee")+';color:'+(s==="away"?"#fff":"#555")+'" data-edit-side="away">先攻：'+S.awayTeam.name+'</button>'+
-        '<button style="flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;background:'+(s==="home"?"#1565c0":"#eee")+';color:'+(s==="home"?"#fff":"#555")+'" data-edit-side="home">後攻：'+S.homeTeam.name+'</button>'+
+        '<button style="flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;background:'+(s==="away"?"#e53935":"#eee")+';color:'+(s==="away"?"#fff":"#555")+'" data-edit-side="away">先攻：'+escH(S.awayTeam.name)+'</button>'+
+        '<button style="flex:1;padding:8px;border:none;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;background:'+(s==="home"?"#1565c0":"#eee")+';color:'+(s==="home"?"#fff":"#555")+'" data-edit-side="home">後攻：'+escH(S.homeTeam.name)+'</button>'+
       '</div>'+
-      '<input class="modal-text-input" type="text" placeholder="チーム名" aria-label="チーム名" value="'+team.name+'" data-field="teamname" data-side="'+s+'">'+
+      '<input class="modal-text-input" type="text" placeholder="チーム名" aria-label="チーム名" value="'+escH(team.name)+'" data-field="teamname" data-side="'+s+'">'+
       '<div style="overflow-y:auto;max-height:52vh">'+rows+'</div>'+
       '<button class="modal-cancel" id="closeModalBtn">閉じる ✅</button>'+
     '</div></div>';
@@ -4529,8 +4569,8 @@ function renderModal(){
       '<div class="modal-sub">チームの割り当てを入れ替えます。記録データはそのままです。</div>'+
       '<div style="background:#fff8e1;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#5d4037;">'+
         '<div style="font-weight:bold;margin-bottom:6px">入れ替え後：</div>'+
-        '<div>⚔ 先攻 → <strong>'+S.homeTeam.name+'</strong></div>'+
-        '<div>🏠 後攻 → <strong>'+S.awayTeam.name+'</strong></div>'+
+        '<div>⚔ 先攻 → <strong>'+escH(S.homeTeam.name)+'</strong></div>'+
+        '<div>🏠 後攻 → <strong>'+escH(S.awayTeam.name)+'</strong></div>'+
       '</div>'+
       '<button id="confirmSwap" style="width:100%;background:#bf360c;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:bold;cursor:pointer;margin-bottom:6px">⇄ 入れ替える</button>'+
       '<button class="modal-cancel" id="closeModalBtn">キャンセル</button>'+
@@ -4554,8 +4594,8 @@ function renderModal(){
       (lastAb?'<div style="background:#fff3e0;border-radius:10px;padding:11px 13px;margin-bottom:14px;">'+
         '<div style="font-size:10px;color:#e65100;font-weight:bold;margin-bottom:5px">取り消す打席</div>'+
         '<div style="display:flex;align-items:center;gap:10px;">'+
-          '<div style="background:#1a3a6e;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px">'+lastAb.playerNum+'</div>'+
-          '<div><div style="font-size:13px;font-weight:bold">'+(lastAb.playerName||lastAb.order+"番")+'</div>'+
+          '<div style="background:#1a3a6e;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px">'+escH(lastAb.playerNum)+'</div>'+
+          '<div><div style="font-size:13px;font-weight:bold">'+escH(lastAb.playerName||lastAb.order+"番")+'</div>'+
           '<div style="font-size:11px;color:#888">'+(lastAb.inning+1)+'回'+(lastAb.side==="top"?"表":"裏")+'</div></div>'+
           '<span style="background:'+sym2.color+';color:#fff;border-radius:7px;padding:4px 10px;font-size:14px;font-weight:900;font-family:monospace;margin-left:auto">'+sym2.sym+'</span>'+
         '</div></div>':"")+''+
@@ -4649,8 +4689,8 @@ function renderModal(){
     var pitchSyms2=S.curPitches.map(function(p2){return pitchSvg(p2,20);}).join("");
     var resultBtns=auto==="KWP_READY"?
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
-        '<button id="autoConfirmKK" style="background:#8b0000;color:#fff;border:none;border-radius:11px;padding:14px 8px;font-size:14px;font-weight:900;cursor:pointer;line-height:1.4">✕ 三振アウト<br><span style="font-size:11px;opacity:.9">捕手がボールを捕った</span></button>'+
-        '<button id="autoConfirmKWP" style="background:#4a148c;color:#fff;border:none;border-radius:11px;padding:14px 8px;font-size:14px;font-weight:900;cursor:pointer;line-height:1.4">→ 振り逃げ出塁<br><span style="font-size:11px;opacity:.9">捕手がボールを後ろに逸らした</span></button>'+
+        '<button id="autoConfirmKK" style="background:#8b0000;color:#fff;border:none;border-radius:11px;padding:14px 8px;font-size:14px;font-weight:bold;cursor:pointer;line-height:1.4">✕ 三振アウト<br><span style="font-size:12px;opacity:.9">捕手がボールを捕った</span></button>'+
+        '<button id="autoConfirmKWP" style="background:#4a148c;color:#fff;border:none;border-radius:11px;padding:14px 8px;font-size:14px;font-weight:bold;cursor:pointer;line-height:1.4">→ 振り逃げ出塁<br><span style="font-size:12px;opacity:.9">捕手がボールを後ろに逸らした</span></button>'+
       '</div>':
       '<button id="autoConfirmOk" style="width:100%;background:'+j.color+';color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:8px">✅ '+j.label+'として記録する</button>';
     return'<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true"><div class="modal-sheet">'+
@@ -4758,10 +4798,10 @@ function renderModal(){
         '<div style="padding:14px 16px 10px;border-bottom:1px solid #f0f0f0;flex-shrink:0;">'+
           '<div style="display:flex;align-items:center;justify-content:space-between;">'+
             '<div style="font-size:16px;font-weight:bold;color:#1a3a6e">記録しました ✅</div>'+
-            '<span style="background:'+sym3.color+';color:#fff;border-radius:7px;padding:3px 11px;font-size:17px;font-weight:900;font-family:monospace;white-space:pre-line;line-height:1.2">'+sym3.sym+'</span>'+
+            '<span style="background:'+sym3.color+';color:#fff;border-radius:7px;padding:3px 11px;font-size:16px;font-weight:900;font-family:monospace;white-space:pre-line;line-height:1.2">'+sym3.sym+'</span>'+
           '</div>'+
-          '<div style="font-size:13px;font-weight:bold;color:#1a3a6e;margin-top:5px">'+resultSummary+'</div>'+
-          '<div style="font-size:11px;color:#888;margin-top:2px">'+(ab.inning+1)+'回'+(ab.side==="top"?"表":"裏")+' '+teamName+' / '+(ab.playerName||ab.order+"番")+'（#'+ab.playerNum+'）</div>'+
+          '<div style="font-size:12px;font-weight:bold;color:#1a3a6e;margin-top:5px">'+resultSummary+'</div>'+
+          '<div style="font-size:12px;color:#888;margin-top:2px">'+(ab.inning+1)+'回'+(ab.side==="top"?"表":"裏")+' '+escH(teamName)+' / '+escH(ab.playerName||ab.order+"番")+'（#'+escH(ab.playerNum)+'）</div>'+
           // 得点情報（初心者向け：主語を明示した平易な日本語）
           (ab.scored>0?(function(){
             var bname=ab.playerName||ab.order+'番';
@@ -4927,7 +4967,7 @@ function renderModal(){
       ];
       function posBtn(p){
         return'<button class="pos-btn" data-wiz-pos="'+p.n+'" data-wiz-key="fielder1" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px;border:1.5px solid #c5cae9;border-radius:8px;background:#fff;cursor:pointer;font-weight:bold;min-height:48px;">'+
-          '<span style="font-size:20px;color:#1a3a6e;font-weight:900;">'+p.lbl+'</span>'+
+          '<span style="font-size:20px;color:#1a3a6e;font-weight:bold;">'+p.lbl+'</span>'+
           '<span style="font-size:10px;color:#888;">'+p.n+'番</span>'+
         '</button>';
       }
@@ -5267,7 +5307,7 @@ function renderModal(){
       if(cp2){
         curPitcherInfo='<div style="background:#fff3e0;border-radius:9px;padding:10px 12px;margin-bottom:12px;">'+
           '<div style="font-size:11px;color:#e65100;font-weight:bold;margin-bottom:4px">現在の投手</div>'+
-          '<div style="font-size:15px;font-weight:bold;color:#1a1a2e">'+(cp2.number?"#"+cp2.number+" ":"")+cp2.name+'</div>'+
+          '<div style="font-size:15px;font-weight:bold;color:#1a1a2e">'+(cp2.number?"#"+escH(cp2.number)+" ":"")+escH(cp2.name)+'</div>'+
           '<div style="display:flex;gap:12px;margin-top:6px;font-size:13px;color:#555">'+
             '<span>球数 <b>'+cp2.pitchCount+'球</b></span>'+
             '<span>打者 <b>'+(cp2.battersFaced||0)+'人</b></span>'+
@@ -5297,13 +5337,13 @@ function renderModal(){
       : list_sh.map(function(g,gi){
           var resultColor=g.result==="win"?"#c62828":g.result==="lose"?"#1565c0":"#555";
           var resultLabel=g.result==="win"?"勝":g.result==="lose"?"負":"分";
-          var metaLine=[g.date, g.tournament, g.venue].filter(Boolean).join(" · ");
+          var metaLine=[escH(g.date), escH(g.tournament), escH(g.venue)].filter(Boolean).join(" · ");
           return'<div style="background:#f8f9fa;border-radius:10px;padding:10px 12px;margin-bottom:8px;">'+
             (metaLine?'<div style="font-size:11px;color:#888;margin-bottom:4px">'+metaLine+'</div>':'')+
             '<div style="display:flex;align-items:center;gap:8px;">'+
               '<span style="background:'+resultColor+';color:#fff;border-radius:6px;padding:2px 8px;font-size:13px;font-weight:bold;flex-shrink:0">'+resultLabel+'</span>'+
               '<span style="font-size:13px;font-weight:bold;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+
-                g.away+' <span style="color:'+resultColor+';font-size:16px">'+g.awayScore+' - '+g.homeScore+'</span> '+g.home+
+                escH(g.away)+' <span style="color:'+resultColor+';font-size:16px">'+g.awayScore+' - '+g.homeScore+'</span> '+escH(g.home)+
               '</span>'+
               '<span style="font-size:11px;color:#aaa;flex-shrink:0">'+g.innings+'回</span>'+
             '</div>'+
@@ -5340,7 +5380,7 @@ function buildWriteGuide(ab){
   }
   // 結果記号（右下）
   if(sym.sym){
-    steps.push(step+++'. <strong>右下</strong>に結果を記入: <span style="color:'+sym.color+';font-family:monospace;font-weight:900;font-size:15px">'+sym.sym+'</span>');
+    steps.push(step+++'. <strong>右下</strong>に結果を記入: <span style="color:'+sym.color+';font-family:monospace;font-weight:900;font-size:14px">'+sym.sym+'</span>');
   }
   // HR/RH の右上
   if(rc==="HR"||rc==="RH"){
@@ -5425,20 +5465,147 @@ var SCOREBOOK_TIPS=[
   {cat:"統計・記録",q:"タイムリーって何？",a:"走者がいるときにヒットを打って走者がホームインした打撃のことです。打点（RBI）が記録されます"},
   {cat:"統計・記録",q:"守備番号がわからない",a:"1=投手 2=捕手 3=一塁手 4=二塁手 5=三塁手 6=遊撃手（ショート） 7=左翼手 8=中堅手 9=右翼手"}
 ];
+// ============================================================
+// 用紙式スコアブック（伝統的テーブル形式）
+// 打順×イニングのグリッドでダイヤモンドを表示
+// ============================================================
+function renderSheetScorebook(){
+  var baseInnings=S.maxInnings||5;
+  var playedInnings=S.curInning+1;
+  ["top","bottom"].forEach(function(side){
+    (S.game[side]||[]).forEach(function(inn,i){
+      if(inn&&((inn.atBats&&inn.atBats.length>0)||(inn.events&&inn.events.length>0)||inn.score>0)){
+        playedInnings=Math.max(playedInnings,i+1);
+      }
+    });
+  });
+  var dispInnings=Math.max(baseInnings,playedInnings);
+
+  var sides=[
+    {side:"top",  team:S.awayTeam, label:"先攻", color:"#c62828"},
+    {side:"bottom",team:S.homeTeam, label:"後攻", color:"#1565c0"}
+  ];
+
+  var html='<div style="padding:6px 4px 80px;">';
+
+  sides.forEach(function(t){
+    var team=t.side==="top"?S.awayTeam:S.homeTeam;
+    var players=team.players||[];
+
+    // チームヘッダー
+    html+='<div style="background:'+t.color+';color:#fff;padding:8px 12px;border-radius:10px 10px 0 0;margin-top:8px;font-size:13px;font-weight:bold;">'+
+      escH(team.name)+' <span style="font-size:11px;opacity:.8">'+t.label+'</span></div>';
+
+    // テーブル
+    html+='<div style="overflow-x:auto;background:#fff;border:1px solid #ddd;border-top:none;border-radius:0 0 10px 10px;margin-bottom:4px;">';
+    html+='<table style="border-collapse:collapse;min-width:'+(200+dispInnings*76)+'px;width:100%">';
+
+    // ヘッダー行
+    html+='<thead><tr style="background:#f5f7fa;border-bottom:2px solid #ccc;">';
+    html+='<th style="padding:4px 6px;font-size:10px;color:#888;border-right:1px solid #e0e0e0;min-width:30px;text-align:center">打順</th>';
+    html+='<th style="padding:4px 6px;font-size:10px;color:#888;border-right:1px solid #e0e0e0;min-width:50px;text-align:left">選手</th>';
+    html+='<th style="padding:4px 3px;font-size:10px;color:#888;border-right:1px solid #e0e0e0;width:22px;text-align:center">守</th>';
+    for(var ci=0;ci<dispInnings;ci++){
+      var isCur=S.curInning===ci&&S.curSide===t.side;
+      html+='<th style="padding:4px 2px;font-size:11px;font-weight:bold;text-align:center;border-right:1px solid #e0e0e0;min-width:72px;'+
+        (isCur?'background:#fff3e0;color:#e65100':'color:#555')+';">'+(ci+1)+'</th>';
+    }
+    html+='</tr></thead><tbody>';
+
+    // 各打順行
+    for(var order=1;order<=9;order++){
+      var p=players[order-1];
+      var pName2=p?p.name:"";
+      var pNum2=p?p.number:"";
+      var pPos2=p?POSITIONS[p.position]||"":"";
+      // 代打記録のチェック
+      var subInfo="";
+      (S.game[t.side]||[]).forEach(function(inn){
+        (inn.changes||[]).forEach(function(ch){
+          if((ch.type==="hitter"||ch.type==="runner")){
+            // この打順に関連する交代を表示
+          }
+        });
+      });
+
+      html+='<tr style="border-bottom:1px solid #e8e8e8;">';
+      // 打順
+      html+='<td style="padding:2px 4px;text-align:center;font-weight:bold;font-size:13px;color:#1a3a6e;border-right:1px solid #e0e0e0;background:#f8f9fc">'+order+'</td>';
+      // 選手名
+      html+='<td style="padding:2px 6px;font-size:11px;font-weight:bold;border-right:1px solid #e0e0e0;background:#f8f9fc;white-space:nowrap;">'+
+        (pNum2?'<span style="color:#999;font-size:10px">#'+escH(pNum2)+'</span> ':'')+escH(pName2)+'</td>';
+      // 守備位置
+      html+='<td style="padding:2px 3px;text-align:center;font-size:11px;color:#555;border-right:1px solid #e0e0e0;background:#f8f9fc">'+escH(pPos2)+'</td>';
+
+      // 各イニングのセル
+      for(var ii=0;ii<dispInnings;ii++){
+        var inn2=S.game[t.side][ii];
+        // この打順のat-batを探す
+        var matchAbs=[];
+        if(inn2&&inn2.atBats){
+          matchAbs=inn2.atBats.filter(function(ab2){return ab2.order===order;});
+        }
+        // slotsもチェック
+        var matchSlots=[];
+        if(inn2&&inn2.slots){
+          matchSlots=inn2.slots.filter(function(sl){return sl.order===order;});
+        }
+
+        var isCurCell=S.curInning===ii&&S.curSide===t.side;
+        var cellBg=isCurCell?"#fffde7":"#fff";
+
+        html+='<td style="padding:1px;text-align:center;vertical-align:middle;border-right:1px solid #e0e0e0;background:'+cellBg+';min-height:68px">';
+
+        if(matchAbs.length>0){
+          matchAbs.forEach(function(mab,mIdx){
+            if(mIdx>0) html+='<div style="border-top:1px dashed #ccc;margin:1px 0"></div>';
+            html+='<div style="display:inline-block;position:relative;cursor:pointer" data-edit-ab="'+ii+'-'+t.side+'-'+mab.order+'">';
+            html+=wasedaDiamondSvg(mab,66);
+            html+='</div>';
+          });
+        } else if(matchSlots.length>0){
+          matchSlots.forEach(function(msl){
+            var qs=msl.quickStatus||"pending";
+            var qsIcon=qs==="out"?"✕":qs==="reach"?"○":"…";
+            var qsColor=qs==="out"?"#90a4ae":qs==="reach"?"#66bb6a":"#ffb74d";
+            html+='<div style="width:66px;height:66px;display:inline-flex;align-items:center;justify-content:center;border:2px dashed '+qsColor+';border-radius:6px;margin:1px auto;cursor:pointer;font-size:18px;color:'+qsColor+'" '+
+              'data-edit-slot="'+ii+'-'+(msl.slotIdx||0)+'-'+t.side+'">'+qsIcon+'</div>';
+          });
+        } else {
+          // 空セル
+          html+='<div style="width:66px;height:66px;display:inline-block;opacity:.15">'+
+            '<svg width="66" height="66" viewBox="0 0 66 66"><polygon points="33,57 57,33 33,9 9,33" fill="none" stroke="#ccc" stroke-width="1"/></svg>'+
+          '</div>';
+        }
+
+        html+='</td>';
+      }
+      html+='</tr>';
+    }
+
+    html+='</tbody></table></div>';
+  });
+
+  html+='</div>';
+  return html;
+}
+
 function renderScorebook(){
-  // サブタブ（スコア一覧 / Tips）
-  var sbSubTabHtml='<div style="display:flex;gap:6px;padding:8px 10px 0;background:#f4f6f9;">'+
-    '<button onclick="" data-sbtab="log" class="sbtab-btn'+(S.sbSubTab!=="tips"?" active-sbtab":"")+
-      '" style="flex:1;padding:7px;border:none;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;'+
-      (S.sbSubTab!=="tips"?"background:#1a3a6e;color:#fff;":"background:#e8eaed;color:#666;")+
-      '">スコア一覧</button>'+
-    '<button onclick="" data-sbtab="tips" class="sbtab-btn'+(S.sbSubTab==="tips"?" active-sbtab":"")+
-      '" style="flex:1;padding:7px;border:none;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;'+
-      (S.sbSubTab==="tips"?"background:#1a3a6e;color:#fff;":"background:#e8eaed;color:#666;")+
-      '">📝 Tips</button>'+
+  // サブタブ（カード式 / 用紙式 / Tips）
+  var _sbSub=S.sbSubTab||"log";
+  function _sbBtn(key,label){
+    var isActive=_sbSub===key;
+    return'<button data-sbtab="'+key+'" class="sbtab-btn'+(isActive?" active-sbtab":"")+
+      '" style="flex:1;padding:7px;border:none;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;'+
+      (isActive?"background:#1a3a6e;color:#fff;":"background:#e8eaed;color:#666;")+
+      '">'+label+'</button>';
+  }
+  var sbSubTabHtml='<div style="display:flex;gap:5px;padding:8px 10px 0;background:#f4f6f9;">'+
+    _sbBtn("log","カード式")+_sbBtn("sheet","用紙式")+_sbBtn("tips","📝 Tips")+
   '</div>';
 
-  if(S.sbSubTab==="tips")return renderTips();
+  if(_sbSub==="tips")return sbSubTabHtml+renderTips();
+  if(_sbSub==="sheet")return sbSubTabHtml+renderSheetScorebook();
   var allAbs=[];
   ["top","bottom"].forEach(function(side){
     (S.game[side]||[]).forEach(function(inn,innIdx){
@@ -5463,15 +5630,15 @@ function renderScorebook(){
     if(!groups[key])groups[key]={side:ab.side,innIdx:ab.innIdx,items:[]};
     groups[key].items.push(ab);
   });
-  var sideLabel={top:S.awayTeam.name+"(先攻)",bottom:S.homeTeam.name+"(後攻)"};
+  var sideLabel={top:escH(S.awayTeam.name)+"(先攻)",bottom:escH(S.homeTeam.name)+"(後攻)"};
   var filterBtns=["all","top","bottom"].map(function(f){
     return'<button class="sb-filter-btn'+(filter===f?" active":"")+'" data-sbfilter="'+f+'">'+(f==="all"?"全て":sideLabel[f])+'</button>';
   }).join("");
   var blocks=Object.keys(groups).map(function(k){var g=groups[k];
-    var tn=g.side==="top"?S.awayTeam.name:S.homeTeam.name;
+    var tn=escH(g.side==="top"?S.awayTeam.name:S.homeTeam.name);
     var cards=g.items.map(function(item){
       if(item.isChange){
-        return'<div class="change-card" style="width:100%">'+item.icon+' <strong>'+item.label+'</strong>：'+(item.name||"")+(item.num?" #"+item.num:"")+'</div>';
+        return'<div class="change-card" style="width:100%">'+escH(item.icon)+' <strong>'+escH(item.label)+'</strong>：'+escH(item.name||"")+(item.num?" #"+escH(item.num):"")+'</div>';
       }
       // 空欄スロット（後で記録する打席）
       if(item.isSlot){
@@ -5493,9 +5660,9 @@ function renderScorebook(){
           }
           var qsLabel=qs==='out'?'アウト（詳細未入力）':qs==='reach'?('出塁'+qsBaseLabel+' — 詳細未入力'):'空欄 — タップして記録';
           return'<div class="waseda-card" style="border:2px dashed '+qsBorder+';background:'+qsBg+';min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;border-radius:10px;padding:10px;"'+
-            ' data-edit-slot="'+item.innIdx+'-'+item.slotIdx+'-'+item.side+'" aria-label="'+slotOrder+'番 '+slotName+' '+qsLabel+'">'+
+            ' data-edit-slot="'+item.innIdx+'-'+item.slotIdx+'-'+item.side+'" aria-label="'+slotOrder+'番 '+escH(slotName)+' '+escH(qsLabel)+'">'+
             '<div style="font-size:22px">'+qsIcon+'</div>'+
-            '<div style="font-size:13px;font-weight:bold;color:'+qsColor+'">'+slotOrder+'番 #'+slotNum+' '+slotName+'</div>'+
+            '<div style="font-size:13px;font-weight:bold;color:'+qsColor+'">'+slotOrder+'番 #'+escH(slotNum)+' '+escH(slotName)+'</div>'+
             '<div style="font-size:11px;color:'+qsColor+';font-weight:bold">'+qsLabel+'</div>'+
           '</div>';
         } else {
@@ -5540,7 +5707,7 @@ function renderScorebook(){
       return'<div class="waseda-card">'+
         '<div class="waseda-header">'+
           '<span class="waseda-order">'+(item.order||"")+'</span>'+
-          '<span class="waseda-player">'+(item.playerName||item.order+"番")+'</span>'+
+          '<span class="waseda-player">'+escH(item.playerName||item.order+"番")+'</span>'+
           '<span class="waseda-sym" style="color:'+sym5.color+'">'+sym5.sym+'</span>'+
         '</div>'+
         '<div style="display:flex;justify-content:center">'+wasedaDiamondSvg(item,88)+'</div>'+
@@ -5555,7 +5722,7 @@ function renderScorebook(){
     return'<div class="sb-inn-group"><div class="sb-inn-label">📋 '+(g.innIdx+1)+'回'+(g.side==="top"?"表":"裏")+' — '+tn+'</div>'+
       '<div class="sb-ab-list">'+cards+'</div></div>';
   }).join("");
-  return'<div style="padding:10px 12px 8px">'+
+  return sbSubTabHtml+'<div style="padding:10px 12px 8px">'+
     '<div style="font-size:13px;font-weight:bold;color:#1a3a6e;margin-bottom:8px">📓 スコアブック（早稲田式）</div>'+
     '<div class="sb-filter">'+filterBtns+'</div>'+blocks+'</div>';
 }
@@ -5587,14 +5754,16 @@ function pitchWarnBadge(count){
 }
 
 function calcPlayerStats(side){
-  // order→stats のマップ
+  // 選手ユニークキー(打順+名前+背番号)→stats のマップ
+  // 代打・代走で同じ打順に別選手が入った場合も分離して集計
   var map={};
   function get(order,name,num){
-    if(!map[order])map[order]={order:order,name:name,num:num,
+    var key=order+"_"+name+"_"+num;
+    if(!map[key])map[key]={order:order,name:name,num:num,
       pa:0,ab:0,h:0,single:0,double:0,triple:0,hr:0,
       bb:0,hbp:0,k:0,sac:0,sf:0,rbi:0,r:0,sb:0,cs:0,
       ibb:0,ruspAb:0,ruspH:0};
-    return map[order];
+    return map[key];
   }
   (S.game[side]||[]).forEach(function(inn){
     // 通常打席
@@ -5655,7 +5824,7 @@ function calcPlayerStats(side){
     });
   });
   // 指標計算
-  var list=Object.keys(map).sort(function(a,b){return Number(a)-Number(b);}).map(function(k){
+  var list=Object.keys(map).sort(function(a,b){return(map[a].order||0)-(map[b].order||0);}).map(function(k){
     var s=map[k];
     var avg = s.ab>0 ? s.h/s.ab : NaN;
     var obp_denom = s.ab+s.bb+s.hbp+s.sf;
@@ -5702,7 +5871,7 @@ function renderBattingStats(){
   sides.forEach(function(t){
     var ps=S.pitchers[t.side]||[];
     if(ps.length===0)return;
-    html+='<tr><td colspan="7" style="padding:3px 5px;font-size:11px;opacity:.7;padding-top:6px;">'+t.team.name+'</td></tr>';
+    html+='<tr><td colspan="7" style="padding:3px 5px;font-size:11px;opacity:.7;padding-top:6px;">'+escH(t.team.name)+'</td></tr>';
     ps.forEach(function(p,idx){
       var ip=calcPitcherIP(t.side,idx);
       var ipNum=parseFloat(ip)||0;
@@ -5710,7 +5879,7 @@ function renderBattingStats(){
       var ipReal=Math.floor(ipNum)+(ipNum%1)*10/3;
       var era=fmtERA(p.earnedRuns||0,ipReal);
       html+='<tr style="'+(p.isCurrent?"background:rgba(255,255,255,.12)":"")+'">'+
-        '<td style="padding:3px 6px;white-space:nowrap;">'+(p.isCurrent?'<span style="font-size:9px;background:#f9a825;color:#fff;border-radius:8px;padding:1px 5px;margin-right:3px;">登板中</span>':'')+(p.number?"#"+p.number+" ":"")+p.name+'</td>'+
+        '<td style="padding:3px 6px;white-space:nowrap;">'+(p.isCurrent?'<span style="font-size:10px;background:#f9a825;color:#fff;border-radius:8px;padding:1px 5px;margin-right:3px;">登板中</span>':'')+(p.number?"#"+escH(p.number)+" ":"")+escH(p.name)+'</td>'+
         '<td style="text-align:center;padding:3px 4px;font-weight:bold;">'+ip+'</td>'+
         '<td style="text-align:center;padding:3px 4px;">'+(p.pitchCount||0)+'</td>'+
         '<td style="text-align:center;padding:3px 4px;">'+(p.battersFaced||0)+'</td>'+
@@ -5731,7 +5900,7 @@ function renderBattingStats(){
 
     html+='<div style="background:#fff;border-radius:10px;margin-bottom:12px;overflow:hidden;">';
     html+='<div style="background:'+teamColor+';padding:9px 14px;display:flex;align-items:center;gap:8px;">'+
-      '<span style="color:#fff;font-size:14px;font-weight:bold;">'+t.team.name+'</span>'+
+      '<span style="color:#fff;font-size:14px;font-weight:bold;">'+escH(t.team.name)+'</span>'+
       '<span style="color:rgba(255,255,255,.7);font-size:11px;">'+t.label+'・打撃成績</span>'+
     '</div>';
 
@@ -5757,8 +5926,8 @@ function renderBattingStats(){
         else if(s.ops>=0.70) opsColor="#1565c0";
       }
       html+='<tr style="background:'+(ri%2===0?"#fff":"#fafafa")+';border-bottom:1px solid #f0f0f0;">'+
-        '<td style="padding:5px 4px;text-align:center;color:#888;font-size:11px;">'+(s.num?"#"+s.num:"")+'</td>'+
-        '<td style="padding:5px 6px;white-space:nowrap;font-weight:bold;">'+s.name+'</td>'+
+        '<td style="padding:5px 4px;text-align:center;color:#888;font-size:11px;">'+(s.num?"#"+escH(s.num):"")+'</td>'+
+        '<td style="padding:5px 6px;white-space:nowrap;font-weight:bold;"><span style="font-size:10px;color:#aaa;margin-right:2px">'+s.order+'</span>'+escH(s.name)+'</td>'+
         '<td style="text-align:center;padding:4px;">'+s.pa+'</td>'+
         '<td style="text-align:center;padding:4px;">'+s.ab+'</td>'+
         '<td style="text-align:center;padding:4px;font-weight:bold;color:'+(s.h>0?"#2e7d32":"#333")+'">'+s.h+'</td>'+
@@ -5842,7 +6011,7 @@ function renderScoreboard(){
   var canShrink=displayInnings>Math.max(baseInnings, playedInnings);
 
   var innH=Array.from({length:displayInnings},function(_,i){return'<th class="'+(S.curInning===i?"cur-inn":"")+'" style="'+(i>=baseInnings?'color:#1565c0;':'') +'">'+(i+1)+'</th>';}).join("");
-  var rows=[["top",S.awayTeam.name,"先攻"],["bottom",S.homeTeam.name,"後攻"]].map(function(arr){
+  var rows=[["top",escH(S.awayTeam.name),"先攻"],["bottom",escH(S.homeTeam.name),"後攻"]].map(function(arr){
     var side=arr[0],name=arr[1],label=arr[2];
     var cells=Array.from({length:displayInnings},function(_,i){
       var sc=(S.game[side][i]&&S.game[side][i].score)||0;
@@ -5924,7 +6093,7 @@ function renderPitchers(){
     html+='<div style="background:#fff;border-radius:12px;margin-bottom:12px;overflow:hidden;">';
     // ヘッダー
     html+='<div style="background:'+teamColor+';padding:10px 14px;display:flex;align-items:center;gap:8px;">'+
-      '<span style="color:#fff;font-size:14px;font-weight:bold">'+s.team.name+'</span>'+
+      '<span style="color:#fff;font-size:14px;font-weight:bold">'+escH(s.team.name)+'</span>'+
       (isDefending?'<span style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:bold">今守備中</span>':'')+
     '</div>';
 
@@ -5943,7 +6112,7 @@ function renderPitchers(){
               (isCur
                 ?'<span style="background:#f9a825;color:#fff;font-size:11px;padding:3px 8px;border-radius:20px;font-weight:bold;flex-shrink:0">登板中</span>'
                 :'<span style="background:#e0e0e0;color:#777;font-size:11px;padding:3px 8px;border-radius:20px;font-weight:bold;flex-shrink:0">交代済</span>')+
-              '<span style="font-size:15px;font-weight:bold;color:#1a1a2e">'+(p.number?"#"+p.number+"&thinsp;":"")+p.name+'</span>'+
+              '<span style="font-size:15px;font-weight:bold;color:#1a1a2e">'+(p.number?"#"+escH(p.number)+"&thinsp;":"")+escH(p.name)+'</span>'+
             '</div>'+
             '<span style="font-size:11px;color:#aaa">'+calcPitcherInnings(s.side,idx)+'</span>'+
           '</div>'+
@@ -6009,7 +6178,7 @@ function renderPitchers(){
       var isCur=p.isCurrent;
       html+='<div style="padding:9px 12px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:10px;'+(isCur?"background:#fffde7":"")+'">'+
         (isCur?'<span style="width:7px;height:7px;background:#f9a825;border-radius:50%;flex-shrink:0"></span>':'<span style="width:7px;height:7px;background:#e0e0e0;border-radius:50%;flex-shrink:0"></span>')+
-        '<span style="flex:1;font-size:14px;font-weight:bold;color:#1a1a2e">'+(p.number?"#"+p.number+" ":"")+p.name+'</span>'+
+        '<span style="flex:1;font-size:14px;font-weight:bold;color:#1a1a2e">'+(p.number?"#"+escH(p.number)+" ":"")+escH(p.name)+'</span>'+
         '<span style="font-size:13px;color:#555;min-width:32px;text-align:center"><b>'+ip+'</b>回</span>'+
         '<span style="font-size:13px;color:#555;min-width:32px;text-align:center"><b>'+(p.pitchCount||0)+'</b>球</span>'+
         '<span style="font-size:12px;min-width:55px;text-align:center;color:'+(p.earnedRuns>0?"#c62828":"#555")+';font-weight:bold">失点'+(p.earnedRuns||0)+'<span style="font-size:10px;font-weight:normal;color:#aaa">（自責）</span></span>'+
@@ -6107,21 +6276,161 @@ function renderTips(){
   return html;
 }
 
+function renderHelp(){
+  var sections=[
+    {title:"基本の流れ", icon:"📋", items:[
+      "① <b>試合前</b>：チーム名・選手名・背番号を登録します。9人分の打順を設定してください。",
+      "② <b>試合中</b>：1球ずつ投球を記録 → 打席結果を選ぶ → 走者の動きを確認。この3ステップの繰り返しです。",
+      "③ <b>試合後</b>：得点表タブで「試合終了」を押すと記録が保存されます。"
+    ]},
+    {title:"画面（タブ）の説明", icon:"📑", items:[
+      "<b>入力</b> — メインの記録画面。投球・打撃結果・走者イベントを入力します。",
+      "<b>得点表</b> — イニングごとのスコアボード。手動で得点修正もできます。延長ボタンで回数を追加可能。",
+      "<b>スコア</b> — 早稲田式スコアブック。ダイヤモンド図で打席記録を視覚的に確認。タップで修正可能。",
+      "<b>投手</b> — 投手の交代記録・投球数・自責点・防御率（ERA）を管理。",
+      "<b>成績</b> — 打率・出塁率・OPSなど、チーム別の打撃成績を一覧表示。",
+      "<b>記録</b> — イニングごとの詳細な記録ログ。",
+      "<b>ヘルプ</b> — この画面です。"
+    ]},
+    {title:"投球の記録", icon:"⚾", items:[
+      "<b>B</b> = ボール / <b>S</b> = 見逃しストライク / <b>SW</b> = 空振り / <b>F</b> = ファウル / <b>HBP</b> = 死球",
+      "四球（4ボール）・三振（3ストライク）は<b>自動判定</b>されます。手動で結果を選ぶ必要はありません。",
+      "急いでいるときは投球を省略して、直接「打球の結果」から選んでもOKです。"
+    ]},
+    {title:"打球の結果を選ぶ", icon:"🏏", items:[
+      "<b>ヒットタブ</b>：単打(1H)・二塁打(2H)・三塁打(3H)・本塁打(HR)・内野安打(RH)・バントヒット(BH)",
+      "<b>出塁タブ</b>：四球(BB)・死球(HBP)・エラー出塁(E)・野選(FC)・振り逃げ(KWP)など",
+      "<b>アウトタブ</b>：ゴロ・フライ・ライナー・犠打・犠飛・ゲッツーなど",
+      "灰色のボタン = 今の状況では<b>起こり得ない</b>結果（例：走者なしで野選）",
+      "守備番号を聞かれたら → 1投 2捕 3一 4二 5三 6遊 7左 8中 9右"
+    ]},
+    {title:"走者の動きを確認", icon:"🏃", items:[
+      "打球結果の後、塁上の走者がどこに進んだか確認画面が出ます。",
+      "「<b>推定</b>」バッジ付きのボタンが最も可能性の高い結果です。迷ったらそれを押せばOK。",
+      "盗塁・暴投・ボーク・牽制アウトなどは「<b>走者のイベント</b>」セクションから記録します。"
+    ]},
+    {title:"便利な機能", icon:"💡", items:[
+      "<b>後で入力</b>（ガイドバー右側）：急いでいるとき、打席を空欄にして次の打者へ。後からスコアタブでタップして記録できます。",
+      "<b>⌫ 取消</b>：間違えた投球を1球取り消し。",
+      "<b>↩ 取り消す</b>（ガイドバー付近）：直前の打席結果をまるごと元に戻す。",
+      "<b>フッターのダイヤモンド図</b>をタップ：走者の位置を手動で修正できます。",
+      "<b>メンバー</b>ボタン：試合中でも選手名・背番号・ポジションを編集可能。",
+      "<b>代打・代走</b>：フッターの「走者のイベント」エリアにボタンがあります。"
+    ]},
+    {title:"データの保存について", icon:"💾", items:[
+      "データはブラウザの<b>localStorage</b>に自動保存されます。ブラウザを閉じても続きから再開できます。",
+      "別のブラウザや端末ではデータは共有されません。",
+      "試合終了後は「過去の試合履歴」に結果が保存されます（最大50試合）。",
+      "⚠ ブラウザのデータ消去を行うと記録も消えます。大切な記録はスコアコピー機能でテキスト保存をお勧めします。"
+    ]},
+    {title:"よくある質問", icon:"❓", items:[
+      "<b>Q. 間違えた記録を直したい</b> → スコアタブで該当の打席カードをタップ → 修正ボタンから。",
+      "<b>Q. 代打を出したい</b> → 入力画面の下部にある「代打」ボタンを押し、名前と背番号を入力。",
+      "<b>Q. 投手を交代したい</b> → 同じく「投手交代」ボタンから。",
+      "<b>Q. 得点が合わない</b> → 得点表タブで手動修正（+/-ボタン）ができます。",
+      "<b>Q. 自責点って何？</b> → 守備ミスがなければ入らなかった点は「非自責点」。アプリが自動判断します。",
+      "<b>Q. OPSって何？</b> → 出塁率＋長打率。打者の総合力を示す指標です。1.000以上で超一流。"
+    ]}
+  ];
+  var html='<div style="padding:10px 12px 80px;">';
+  html+='<div style="font-size:16px;font-weight:bold;color:#1a3a6e;margin-bottom:2px">📖 使い方ガイド</div>';
+  html+='<div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.5">このアプリの使い方をまとめています。タップして詳細を表示。</div>';
+  sections.forEach(function(sec,si){
+    html+='<details style="background:#fff;border-radius:10px;margin-bottom:8px;overflow:hidden;border:1px solid #e8eaed;"'+(si<2?' open':'')+'>';
+    html+='<summary style="background:#f8f9fa;padding:11px 14px;font-size:13px;font-weight:bold;color:#1a3a6e;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;">'+
+      '<span>'+sec.icon+' '+sec.title+'</span>'+
+      '<span style="font-size:14px;color:#1565c0;flex-shrink:0;margin-left:6px">▶</span>'+
+    '</summary>';
+    html+='<div style="padding:10px 14px;border-top:1px solid #e8eaed;">';
+    sec.items.forEach(function(item){
+      html+='<div style="font-size:12px;color:#444;line-height:1.8;padding:4px 0;border-bottom:1px solid #f5f5f5;">'+item+'</div>';
+    });
+    html+='</div></details>';
+  });
+  html+='<div style="margin-top:16px;padding:12px;background:#e3f2fd;border-radius:10px;font-size:12px;color:#1565c0;line-height:1.6;">'+
+    '<b>スコア記録のコツ</b><br>'+
+    '・慣れないうちは「後で入力」を活用して、まずアウト/出塁だけ記録しましょう<br>'+
+    '・守備番号や送球先の詳細は後からでも修正できます<br>'+
+    '・スコアタブのTipsにも詳しい説明があります'+
+  '</div>';
+
+  // ── 記号一覧表 ──
+  html+='<details style="background:#fff;border-radius:10px;margin-top:12px;overflow:hidden;border:1px solid #e8eaed;">';
+  html+='<summary style="background:#1a3a6e;padding:11px 14px;font-size:13px;font-weight:bold;color:#fff;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;">'+
+    '<span>📊 スコア記号一覧表</span>'+
+    '<span style="font-size:14px;color:rgba(255,255,255,.7);flex-shrink:0;margin-left:6px">▶</span>'+
+  '</summary>';
+  html+='<div style="padding:8px;border-top:1px solid #e8eaed;overflow-x:auto;">';
+
+  var symGroups=[
+    {title:"投球記号",color:"#1565c0",syms:[
+      ["O","ストライク（見逃し）"],["X","ボール"],["V","ファール"],
+      ["⊕","空振りストライク"],["◎","バント空振り"],["∨","バントファール"]
+    ]},
+    {title:"打席結果",color:"#2e7d32",syms:[
+      ["K","三振（見逃し）"],["SK","三振（空振り）"],["ꓘ","振り逃げ"],
+      ["B / BB","四球（フォアボール）"],["D / HBP","死球（デッドボール）"],["IB","敬遠四球"]
+    ]},
+    {title:"打球の種類",color:"#e65100",syms:[
+      ["⌒","フライ（例: 8⌒ = 中飛）"],["∪","ゴロ（例: 6∪3 = 遊ゴロ）"],
+      ["—","ライナー（例: 5— = 三直）"],["／","安打（ヒット）"],
+      ["内野安打","ゴロで内野の間を抜けたヒット"],["BH","バントヒット"]
+    ]},
+    {title:"守備・走塁",color:"#455a64",syms:[
+      ["E","エラー（失策）"],["FC","野選（フィールダースチョイス）"],
+      ["DP","ゲッツー（併殺打）"],["IFF","インフィールドフライ"],
+      ["△","犠牲フライ"],["◆","バント失敗"],["◆K","スリーバント失敗"]
+    ]},
+    {title:"走者イベント",color:"#00695c",syms:[
+      ["S","盗塁"],["CS","盗塁失敗"],["DS","ダブルスチール"],
+      ["W.P","ワイルドピッチ（暴投）"],["P.B","パスボール（捕逸）"],
+      ["P","ボーク"],["ケ","牽制アウト"],["T.O","タッチアウト"]
+    ]},
+    {title:"その他",color:"#4527a0",syms:[
+      ["P.H","代打"],["P.R","代走"],
+      ["◇中央○","得点（ホームイン）"],["◇中央☆","残塁"],
+      ["Ⅰ Ⅱ Ⅲ","1アウト / 2アウト / 3アウト"],
+      ["//","チェンジ（攻守交代）"]
+    ]},
+    {title:"守備番号",color:"#c62828",syms:[
+      ["1","投手"],["2","捕手"],["3","一塁手"],
+      ["4","二塁手"],["5","三塁手"],["6","遊撃手"],
+      ["7","左翼手"],["8","中堅手"],["9","右翼手"]
+    ]}
+  ];
+  symGroups.forEach(function(sg){
+    html+='<div style="margin-bottom:8px">';
+    html+='<div style="background:'+sg.color+';color:#fff;font-size:11px;font-weight:bold;padding:4px 10px;border-radius:6px;margin-bottom:4px">'+sg.title+'</div>';
+    html+='<table style="width:100%;border-collapse:collapse;font-size:11px;">';
+    sg.syms.forEach(function(s,si){
+      html+='<tr style="background:'+(si%2===0?"#fafafa":"#fff")+';border-bottom:1px solid #f0f0f0">'+
+        '<td style="padding:4px 8px;font-weight:bold;color:#1a3a6e;white-space:nowrap;width:60px;font-family:monospace;font-size:13px">'+escH(s[0])+'</td>'+
+        '<td style="padding:4px 8px;color:#444">'+s[1]+'</td></tr>';
+    });
+    html+='</table></div>';
+  });
+
+  html+='</div></details>';
+
+  html+='</div>';
+  return html;
+}
+
 function renderLog(){
   return'<div style="padding:10px 10px 8px">'+
-    [["top",S.awayTeam.name],["bottom",S.homeTeam.name]].map(function(arr){
+    [["top",escH(S.awayTeam.name)],["bottom",escH(S.homeTeam.name)]].map(function(arr){
       var side=arr[0],tname=arr[1];
       var blocks=(S.game[side]||[]).map(function(inn,innIdx){
         if(!inn||(inn.atBats||[]).length===0&&(inn.events||[]).length===0&&(inn.changes||[]).length===0)return"";
         var changeRows=(inn.changes||[]).map(function(ch){
-          return'<div style="background:#fff8e1;border-radius:7px;padding:5px 9px;margin-bottom:5px;font-size:11px;font-weight:bold;color:#5d4037">'+ch.icon+' '+ch.label+'：'+(ch.name||"")+(ch.num?" #"+ch.num:"")+'</div>';
+          return'<div style="background:#fff8e1;border-radius:7px;padding:5px 9px;margin-bottom:5px;font-size:11px;font-weight:bold;color:#5d4037">'+escH(ch.icon)+' '+escH(ch.label)+'：'+escH(ch.name||"")+(ch.num?" #"+escH(ch.num):"")+'</div>';
         }).join("");
         var abRows=(inn.atBats||[]).map(function(ab){
           var sym6=ab.sym||{sym:ab.result||"",color:"#888"};
           var dn4=buildDefNote(ab.defense||{});
           return'<div class="log-ab">'+
-            '<span class="log-num">'+(ab.playerNum||"?")+'</span>'+
-            '<span class="log-name">'+(ab.playerName||ab.order+"番")+'</span>'+
+            '<span class="log-num">'+escH(ab.playerNum||"?")+'</span>'+
+            '<span class="log-name">'+escH(ab.playerName||ab.order+"番")+'</span>'+
             '<div class="log-pitches">'+(ab.pitches||[]).map(function(p5){return pitchSvg(p5,13);}).join("")+'</div>'+
             '<div class="log-right">'+
               '<span class="result-badge" style="background:'+sym6.color+'">'+sym6.sym+'</span>'+
@@ -6315,6 +6624,14 @@ function bindEvents(){
       });
     })();
     // 試合開始
+    // チュートリアルボタン
+    on("tutSkip","click",function(){ startGame(); render(); });
+    on("tutNext","click",function(){
+      S.tutorialStep=(S.tutorialStep||0)+1;
+      if(S.tutorialStep>=3){ startGame(); render(); }
+      else render();
+    });
+    on("tutFinish","click",function(){ startGame(); render(); });
     on("startBtn","click",function(){
       // メタ情報を最終確定
       if(!S.meta)S.meta={};
@@ -6355,6 +6672,11 @@ function bindEvents(){
       hap(15);
       var btn=e.currentTarget;
       var rc=btn.dataset.result;
+      // ── ヒット選択ボタン → 塁数選択モーダル ──
+      if(rc==="HIT_SELECT"){
+        S.modal={type:"hit_select"};
+        render();return;
+      }
       var isWiz=btn.dataset.wiz==="1";
       var avail=getResultAvailability(rc);
       if(avail==="impossible"){
@@ -6496,7 +6818,7 @@ function bindEvents(){
           S.modal={type:"unavailable_alert",message:getUnavailableMessage(code),code:code};render();return;
         }
         // ウィザードが必要か判定
-        var btn2=[].concat.apply([],[RESULT_GROUPS.out,RESULT_GROUPS.hit,RESULT_GROUPS.reach]).find(function(b){return b.code===code;});
+        var btn2=[].concat.apply([],[RESULT_GROUPS.out,RESULT_GROUPS.reach]).find(function(b){return b.code===code;});
         var isWiz=btn2&&btn2.wiz;
         if(isWiz)defWizStart(code);
         else startRunnerConfirmIfNeeded(code,buildSym({hitType:code}),{hitType:code});
@@ -6741,6 +7063,14 @@ function bindEvents(){
     });
     // モーダル共通閉じる
     on("closeModalBtn","click",closeModal);
+    on("modalCancel","click",closeModal);
+    // ── ヒット塁数選択モーダル ──
+    onAll("[data-hit-sel]","click",function(e){
+      hap(15);
+      var rc=e.currentTarget.dataset.hitSel;
+      S.modal=null;
+      defWizStart(rc);
+    });
     var mo=document.getElementById("modalOverlay");
     if(mo)mo.addEventListener("click",function(e){
       if(e.target!==mo)return;
