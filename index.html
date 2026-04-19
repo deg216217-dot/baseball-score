@@ -2085,7 +2085,7 @@ function startRunnerConfirmIfNeeded(rc, sym, sel){
   var bases = S.curBases.slice();
 
   // 自動処理できるケース（確認不要）
-  var autoOk = ["K","SK","K3B","BB","HBP","HR","RH","SAC","SQ","SQE","SF","DP","KWP","IFF","CI","OBI"].includes(rc);
+  var autoOk = ["K","SK","K3B","BB","HBP","HR","RH","SAC","SQ","SQE","SF","DP","IFF","CI","OBI"].includes(rc); // KWPは走者確認あり（3塁走者の扱いのため）
   if(autoOk){
     // SQE: 打者三振(1アウト) + 3塁走者もアウト(追加1アウト) = 合計2アウト
     if(rc==="SQE"){
@@ -2190,9 +2190,9 @@ function calcDefaultRunnerMoves(rc, sel, bases){
         moves[b] = {to:String(b), reason:"stay", auto:false, askNeeded:true,
           hint:"エラーの混乱で1つ余分に進んだ場合は選択してください（通常は止まります）"};
       } else {
-        // 通常ゴロ: 非フォース走者は動かない（自動）
-        moves[b] = {to:String(b), reason:"stay", auto:true,
-          hint:"ゴロの間、走者はそのまま"};
+        // 通常ゴロ: 非フォース走者も進塁する場合あり → 確認
+        moves[b] = {to:String(b), reason:"stay", auto:false, askNeeded:true,
+          hint:"ゴロの間に進塁しましたか？（通常は止まります。打者アウトの隙に走れた場合は進んだ塁を選んでください）"};
       }
     }
     // ── フライ系（FO / SF） ──
@@ -2210,9 +2210,9 @@ function calcDefaultRunnerMoves(rc, sel, bases){
         moves[b] = {to:String(b), reason:"stay", auto:false, askNeeded:true,
           hint:"タッチアップ: フライ後に2塁→3塁へ進める場合があります"};
       } else {
-        // 1塁走者: 通常は戻る（自動）
-        moves[b] = {to:String(b), reason:"stay", auto:true,
-          hint:"フライなので通常は帰塁。タッチアップする場合は2塁を選択"};
+        // 1塁走者: タッチアップで2塁に進む場合もある → 確認
+        moves[b] = {to:String(b), reason:"stay", auto:false, askNeeded:true,
+          hint:"フライ後、帰塁しましたか？タッチアップで2塁に進んだ場合は「2塁へ」を選択"};
       }
     }
     // ── ライナー系（LO） ──
@@ -2347,6 +2347,18 @@ function calcDefaultRunnerMoves(rc, sel, bases){
         moves[b]={to:b+1>3?"H":String(b+1),reason:"force",auto:true,hint:"バントエラーで前の塁が空くので自動で進みます"};
       } else {
         moves[b]={to:String(b),reason:"stay",auto:false,askNeeded:true,hint:"バントエラーの混乱で余分に進んだかもしれません"};
+      }
+    }
+    // ── KWP（振り逃げ）── 打者が1塁へ、フォース走者は進む、非フォースは確認
+    else if(rc === "KWP"){
+      var forcedKWP = isForced(b, bases);
+      if(forcedKWP){
+        moves[b]={to:b+1>3?"H":String(b+1),reason:"force",auto:true,
+          hint:"振り逃げで打者が1塁に来るためフォース進塁します"};
+      } else {
+        // 非フォース走者（2塁・3塁）は動かない
+        moves[b]={to:String(b),reason:"stay",auto:true,
+          hint:"振り逃げで打者が1塁に出ますが、この走者はフォースされません"};
       }
     }
     // ── BB/HBP/KWP（フォアボール系）── フォース走者のみ自動進塁
@@ -3211,7 +3223,12 @@ function render(){
     if(!app||!mr)return;
     if(S.page==="setup")app.innerHTML=renderSetup();
     else app.innerHTML=renderGame();
-    mr.innerHTML=S.modal?renderModal():"";
+    var modalHtml=S.modal?renderModal():"";
+    if(S.modal&&!modalHtml.trim()){
+      console.warn("空モーダル検出:", S.modal&&S.modal.type);
+      S.modal=null; modalHtml="";
+    }
+    mr.innerHTML=modalHtml;
     // モーダル表示中はappのタッチを無効化（iOS Safariのイベント透過防止）
     if(app){app.style.pointerEvents=S.modal?"none":"";}
     if(mr){mr.style.pointerEvents=S.modal?"auto":"none";}
@@ -3506,7 +3523,8 @@ function renderGame(){
     else if(gb>=3&&gs===0){gt="B3つ — あと1球でフォアボール";}
     else if(gs>=2&&gb===0){gt="S2つ — あと1球で三振";}
     else if(gs>=2){gt="2ストライク中 — F(ファウル)はカウント増えません";}
-    else{gt="打球が起きたら ↓ ② アウト・ヒット・出塁を選ぶ";}
+    else if(S.outs>0){gt="打球が起きたら ↓ ② で入力。走者が進んだ場合も確認で記録できます";}
+  else{gt="打球が起きたら ↓ ② アウト・ヒット・出塁を選ぶ";}
     // 「後で入力」をガイドバー右端に常時表示
     var _skipable=(!S.editingSlot&&!S._pendingChange);
     var _pc=0;
@@ -4729,8 +4747,8 @@ function renderModal(){
       '</div>'+
       resultBtns+
       '<div style="display:flex;gap:8px;margin-top:4px">'+
-        '<button id="autoFixBtn" style="flex:1;background:#fff;color:#e65100;border:2px solid #e65100;border-radius:9px;padding:11px;font-size:12px;font-weight:bold;cursor:pointer;min-height:44px">✏️ 1球戻す</button>'+
-        '<button class="modal-cancel" id="closeModalBtn" style="flex:1;margin-top:0;background:#f5f5f5;min-height:44px">キャンセル</button>'+
+        '<button id="autoFixBtn" style="flex:1;background:#fff;color:#e65100;border:2px solid #e65100;border-radius:9px;padding:11px;font-size:13px;font-weight:bold;cursor:pointer;min-height:44px">✏️ 1球修正</button>'+
+        '<button id="autoResultIgnoreBtn" style="flex:1;margin-top:0;background:#f0f0f0;color:#666;border:none;border-radius:9px;padding:0;font-size:12px;font-weight:bold;cursor:pointer;min-height:44px">← 無視して続ける</button>'+
       '</div>'+
     '</div></div>';
   }
@@ -6527,6 +6545,18 @@ function onAll(sel,ev,fn){document.querySelectorAll(sel).forEach(function(el){el
 
 function bindEvents(){
   try{
+    // ── タップ連打防止ユーティリティ ──
+    // iOS Safariのゴーストタップ防止: ボタン押下後300ms無効化
+    function onceSafe(id, fn){
+      var el=document.getElementById(id);
+      if(!el)return;
+      el.addEventListener("click",function handler(e){
+        el.removeEventListener("click",handler);
+        el.style.opacity="0.5";
+        el.style.pointerEvents="none";
+        fn(e);
+      });
+    }
     // 状況確認OKボタン（unlikelyだが押した場合の処理）
     on("situationProceedBtn","click",function(){
       if(!S.modal||S.modal.type!=="situation_confirm")return;
@@ -6831,18 +6861,26 @@ function bindEvents(){
       } else closeModal();
     });
     // 自動判定
-    on("autoConfirmOk","click",function(){
+    onceSafe("autoConfirmOk",function(){
       if(!S.modal)return;
       var auto=S.modal.autoCode;S.modal=null;
       if(auto==="BB")startRunnerConfirmIfNeeded("BB",buildSym({hitType:"BB"}),{hitType:"BB"});
       else if(auto==="HBP")startRunnerConfirmIfNeeded("HBP",buildSym({hitType:"HBP"}),{hitType:"HBP"});
       else if(auto==="K")startRunnerConfirmIfNeeded("K",buildSym({hitType:"K"}),{hitType:"K"});
     });
-    on("autoConfirmKK","click",function(){S.modal=null;startRunnerConfirmIfNeeded("SK",buildSym({hitType:"SK"}),{hitType:"SK"});});
-    on("autoConfirmKWP","click",function(){S.modal=null;startRunnerConfirmIfNeeded("KWP",buildSym({hitType:"KWP"}),{hitType:"KWP"});});
+    onceSafe("autoConfirmKK",function(){S.modal=null;startRunnerConfirmIfNeeded("SK",buildSym({hitType:"SK"}),{hitType:"SK"});});
+    onceSafe("autoConfirmKWP",function(){
+      S.modal=null;
+      startRunnerConfirmIfNeeded("KWP",buildSym({hitType:"KWP"}),{hitType:"KWP"});
+    });
     on("autoFixBtn","click",function(){S.curPitches=S.curPitches.slice(0,-1);S.modal=null;S.autoMsg=null;render();});
+    on("autoResultIgnoreBtn","click",function(){
+      // 判定を無視してモーダルを閉じる（投球は残す）
+      // 次に何かボタンを押すと再度同じ判定が出る可能性がある点を許容
+      S.modal=null;render();
+    });
     // プレビュー
-    on("closePreviewBtn","click",function(){
+    onceSafe("closePreviewBtn",function(){
   if(S.modal&&S.modal.autoChange){
     S.modal=null;
     doChange();
